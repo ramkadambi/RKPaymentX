@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>WF-US-20250115-002456</MsgId>
+      <CreDtTm>2025-01-15T14:45:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>CLRG</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>WF-CUST-US-20250115-002</InstrId>
+        <EndToEndId>E2E-US-WF-20250115-002456</EndToEndId>
+      </PmtId>
+      <Amt>
+        <InstdAmt Ccy="USD">8750.50</InstdAmt>
+      </Amt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BIC>BOFAUS3NXXX</BIC>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>Bank of America Customer</Nm>
+      </Cdtr>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>1234567890</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <Dbtr>
+        <Nm>Wells Fargo Customer A</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>5555987654</Id>
+          </Othr>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>WFBIUS6SXXX</BIC>
+        </FinInstnId>
+      </DbtrAgt>
+      <IntrmyAgt>
+        <FinInstnId>
+          <BIC>WFBIUS6SXXX</BIC>
+        </FinInstnId>
+      </IntrmyAgt>
+      <RmtInf>
+        <Ustrd>Wire transfer from Wells Fargo to Bank of America - Payment for services</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>
+

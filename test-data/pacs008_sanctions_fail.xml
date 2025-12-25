@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>WF-SANCTIONS-20250115-005678</MsgId>
+      <CreDtTm>2025-01-15T18:00:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>CLRG</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>WF-CUST-SANCTIONS-20250115-005</InstrId>
+        <EndToEndId>E2E-SANCTIONS-WF-20250115-005678</EndToEndId>
+      </PmtId>
+      <Amt>
+        <InstdAmt Ccy="USD">10000.00</InstdAmt>
+      </Amt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BIC>BOFAUS3NXXX</BIC>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>BLOCKED ENTITY</Nm>
+      </Cdtr>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>9876543210</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <Dbtr>
+        <Nm>Wells Fargo Customer A</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>5555987654</Id>
+          </Othr>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>WFBIUS6SXXX</BIC>
+        </FinInstnId>
+      </DbtrAgt>
+      <RmtInf>
+        <Ustrd>Payment to sanctioned entity - should fail sanctions check</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>
+

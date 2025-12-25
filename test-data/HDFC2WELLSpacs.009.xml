@@ -1,0 +1,44 @@
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
+  <FICdtTrf>
+    <GrpHdr>
+      <MsgId>HDFC-WF-20251225-001</MsgId>
+      <CreDtTm>2025-12-25T10:01:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>CLRG</SttlmMtd>
+        <SttlmDt>2025-12-25</SttlmDt>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>HDFC-CUSTA-20251225</InstrId>
+        <EndToEndId>INV-IND-98765</EndToEndId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="USD">10000.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2025-12-25</IntrBkSttlmDt>
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>HDFCINBBXXX</BIC>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BIC>WFBIUS6SXXX</BIC>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>Wells Fargo Customer B</Nm>
+      </Cdtr>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>US-CUSTB-ACC67890</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>Payment for Invoice 98765</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FICdtTrf>
+</Document>

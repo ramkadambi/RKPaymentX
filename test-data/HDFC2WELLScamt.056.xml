@@ -1,0 +1,21 @@
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.056.001.08">
+  <FIToFIPmtCxlReq>
+    <GrpHdr>
+      <MsgId>HDFC-CANCEL-20251225-001</MsgId>
+      <CreDtTm>2025-12-25T10:10:00</CreDtTm>
+    </GrpHdr>
+    <CxlReqInf>
+      <PmtCxlReq>
+        <OrgnlInstrId>CUSTIND-A-20251225</OrgnlInstrId>
+        <OrgnlEndToEndId>INV-IND-98765</OrgnlEndToEndId>
+        <OrgnlTxId>WF-FEDWIRE-20251225-001</OrgnlTxId>
+        <CxlRsnInf>
+          <Rsn>
+            <Cd>DUPL</Cd>
+          </Rsn>
+          <AddtlInf>Duplicate payment detected, request cancellation</AddtlInf>
+        </CxlRsnInf>
+      </PmtCxlReq>
+    </CxlReqInf>
+  </FIToFIPmtCxlReq>
+</Document>

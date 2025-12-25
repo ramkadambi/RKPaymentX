@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
+  <FICdtTrf>
+    <GrpHdr>
+      <MsgId>FED-SETTLE-20250115-003789</MsgId>
+      <CreDtTm>2025-01-15T16:20:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>CLRG</SttlmMtd>
+        <SttlmDt>2025-01-15</SttlmDt>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>FED-WF-20250115-003</InstrId>
+        <EndToEndId>E2E-FED-SETTLE-20250115-003789</EndToEndId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="USD">25000.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2025-01-15</IntrBkSttlmDt>
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>CHASUS33XXX</BIC>
+        </FinInstnId>
+      </DbtrAgt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BIC>WFBIUS6SXXX</BIC>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>Wells Fargo Settlement Account</Nm>
+      </Cdtr>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>WF-FED-SETTLE-001</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <RmtInf>
+        <Ustrd>FED settlement payment from Chase to Wells Fargo</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FICdtTrf>
+</Document>
+

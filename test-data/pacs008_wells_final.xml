@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>WF-IBT-20250115-001234</MsgId>
+      <CreDtTm>2025-01-15T10:30:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>CLRG</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>WF-CUST-IBT-20250115-001</InstrId>
+        <EndToEndId>E2E-IBT-WF-20250115-001234</EndToEndId>
+      </PmtId>
+      <Amt>
+        <InstdAmt Ccy="USD">12500.00</InstdAmt>
+      </Amt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BIC>WFBIUS6SXXX</BIC>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>Wells Fargo Customer B</Nm>
+      </Cdtr>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>5555123456</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+      <Dbtr>
+        <Nm>Wells Fargo Customer A</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>5555987654</Id>
+          </Othr>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>WFBIUS6SXXX</BIC>
+        </FinInstnId>
+      </DbtrAgt>
+      <RmtInf>
+        <Ustrd>Internal transfer between Wells Fargo accounts - Invoice #IBT-2025-001</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>
+
