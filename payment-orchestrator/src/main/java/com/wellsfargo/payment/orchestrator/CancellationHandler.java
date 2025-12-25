@@ -262,8 +262,12 @@ public class CancellationHandler {
         
         public String getOriginalInstrId() { return originalInstrId; }
         public String getOriginalEndToEndId() { return originalEndToEndId; }
+        // getOriginalTxId, getReasonCode, getAdditionalInfo are kept for future use
+        @SuppressWarnings("unused")
         public String getOriginalTxId() { return originalTxId; }
+        @SuppressWarnings("unused")
         public String getReasonCode() { return reasonCode; }
+        @SuppressWarnings("unused")
         public String getAdditionalInfo() { return additionalInfo; }
     }
 }

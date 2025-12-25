@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 
 /**
  * Generator for PACS.002 status report messages.
@@ -18,7 +17,6 @@ public class Pacs002Generator {
     
     private static final Logger log = LoggerFactory.getLogger(Pacs002Generator.class);
     private static final String NAMESPACE = "urn:iso:std:iso:20022:tech:xsd:pacs.002.001.10";
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     
     /**
      * Generate PACS.002 status report XML from PaymentEvent and status.

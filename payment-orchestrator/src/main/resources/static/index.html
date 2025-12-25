@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Error Management Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Payment Error Management Dashboard</h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-primary">Refresh</button>
+            </div>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-title">Total Errors</div>
+                <div class="card-value" id="totalErrors">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Today</div>
+                <div class="card-value" id="todayErrors">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">High Priority</div>
+                <div class="card-value" id="highErrors">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">New</div>
+                <div class="card-value" id="newErrors">0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <select id="serviceFilter" class="filter-select">
+                <option value="">All Services</option>
+                <option value="account_validation">Account Validation</option>
+                <option value="routing_validation">Routing Validation</option>
+                <option value="sanctions_check">Sanctions Check</option>
+                <option value="balance_check">Balance Check</option>
+                <option value="payment_posting">Payment Posting</option>
+            </select>
+            <select id="statusFilter" class="filter-select">
+                <option value="">All Status</option>
+                <option value="NEW">New</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="FIXED">Fixed</option>
+                <option value="CANCELLED">Cancelled</option>
+            </select>
+            <input type="text" id="searchInput" class="filter-input" placeholder="Search by E2E ID...">
+            <button id="applyFiltersBtn" class="btn btn-secondary">Apply Filters</button>
+        </div>
+
+        <!-- Error List Table -->
+        <div class="table-container">
+            <table class="error-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>E2E ID</th>
+                        <th>Step</th>
+                        <th>Error</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="errorTableBody">
+                    <!-- Error rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Error Detail Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Error Details</h2>
+            <div id="modalBody">
+                <!-- Error details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Fix & Resume Modal -->
+    <div id="fixModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Fix & Resume Payment</h2>
+            <div class="form-group">
+                <label>Fix Type:</label>
+                <select id="fixType" class="form-control">
+                    <option value="data_correction">Data Correction</option>
+                    <option value="override">Business Rule Override</option>
+                    <option value="manual_fix">Manual Fix</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Fix Details:</label>
+                <textarea id="fixDetails" class="form-control" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Comments:</label>
+                <textarea id="fixComments" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmFixBtn" class="btn btn-primary">Fix & Resume</button>
+                <button class="btn btn-secondary close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restart Modal -->
+    <div id="restartModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Restart from Beginning</h2>
+            <div class="warning-box">
+                <strong>Warning:</strong> This will restart the payment from account validation step.
+                All previous processing will be cleared.
+            </div>
+            <div class="form-group">
+                <label>Comments:</label>
+                <textarea id="restartComments" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmRestartBtn" class="btn btn-primary">Restart</button>
+                <button class="btn btn-secondary close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Modal -->
+    <div id="cancelModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Cancel & Return Payment</h2>
+            <div class="form-group">
+                <label>Cancellation Reason:</label>
+                <select id="cancelReason" class="form-control">
+                    <option value="business_rule">Business Rule Violation</option>
+                    <option value="sanctions">Sanctions Hit</option>
+                    <option value="insufficient_funds">Insufficient Funds</option>
+                    <option value="invalid_account">Invalid Account</option>
+                    <option value="customer_request">Customer Request</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Additional Comments:</label>
+                <textarea id="cancelComments" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="confirmCancelBtn" class="btn btn-danger">Cancel & Return</button>
+                <button class="btn btn-secondary close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
