@@ -82,6 +82,25 @@ public class ErrorManagementController {
     }
     
     /**
+     * Load mock data for UI testing (without Kafka).
+     */
+    @PostMapping("/load-mock-data")
+    public ResponseEntity<Map<String, String>> loadMockData() {
+        try {
+            errorManagementService.loadMockData();
+            int errorCount = errorManagementService.getAllErrors().size();
+            return ResponseEntity.ok(Map.of(
+                "message", "Mock data loaded successfully",
+                "errorCount", String.valueOf(errorCount)
+            ));
+        } catch (Exception e) {
+            log.error("Error loading mock data", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
      * Get error statistics.
      */
     @GetMapping("/statistics")

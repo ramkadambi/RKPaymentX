@@ -1,0 +1,24 @@
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.004.001.09">
+  <PmtRtr>
+    <GrpHdr>
+      <MsgId>WF-RETURN-20251225-001</MsgId>
+      <CreDtTm>2025-12-25T10:15:00</CreDtTm>
+    </GrpHdr>
+    <OrgnlGrpInf>
+      <OrgnlMsgId>HDFC-20251225-001</OrgnlMsgId>
+      <OrgnlMsgNmId>pacs.008.001.08</OrgnlMsgNmId>
+    </OrgnlGrpInf>
+    <TxInf>
+      <OrgnlInstrId>CUSTIND-A-20251225</OrgnlInstrId>
+      <OrgnlEndToEndId>INV-IND-98765</OrgnlEndToEndId>
+      <RtrId>WF-RTR-20251225-001</RtrId>
+      <RtrRsnInf>
+        <Rsn>
+          <Cd>AC01</Cd>
+        </Rsn>
+        <AddtlInf>Beneficiary account closed at Wells Fargo</AddtlInf>
+      </RtrRsnInf>
+      <RtrAmt Ccy="USD">10000.00</RtrAmt>
+    </TxInf>
+  </PmtRtr>
+</Document>

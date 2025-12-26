@@ -17,6 +17,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -88,6 +89,9 @@ public class PaymentOrchestratorService {
     @Value("${kafka.consumer.auto-offset-reset:earliest}")
     private String autoOffsetReset;
     
+    @Value("${error.management.mock.mode:false}")
+    private boolean mockMode;
+    
     // Kafka consumers and producers
     private KafkaConsumer<String, PaymentEvent> ingressConsumer;
     private KafkaConsumer<String, ServiceResult> resultsConsumer;
@@ -117,15 +121,21 @@ public class PaymentOrchestratorService {
     
     // Notification and cancellation services
     private NotificationService notificationService;
-    private CancellationHandler cancellationHandler;
     
-    public PaymentOrchestratorService(CancellationHandler cancellationHandler) {
-        this.cancellationHandler = cancellationHandler;
-    }
+    @Autowired(required = false)
+    private CancellationHandler cancellationHandler;
     
     @PostConstruct
     public void init() {
-        log.info("Initializing Payment Orchestrator Service");
+        log.info("Initializing Payment Orchestrator Service (mockMode={})", mockMode);
+        
+        if (mockMode) {
+            log.info("Running in MOCK MODE - Kafka consumers/producers will not be initialized");
+            // Initialize notification service for PACS.002/PACS.004 generation (but won't publish to Kafka)
+            notificationService = new NotificationService(bootstrapServers);
+            log.info("Payment Orchestrator Service initialized in MOCK MODE");
+            return;
+        }
         
         // Create ingress consumer
         Properties ingressProps = new Properties();
@@ -196,6 +206,14 @@ public class PaymentOrchestratorService {
         
         running.set(false);
         
+        if (mockMode) {
+            if (notificationService != null) {
+                notificationService.shutdown();
+            }
+            log.info("Payment Orchestrator Service shut down (mock mode)");
+            return;
+        }
+        
         if (executorService != null) {
             executorService.shutdown();
             try {
@@ -231,6 +249,11 @@ public class PaymentOrchestratorService {
      * Process ingress PaymentEvents.
      */
     private void processIngressEvents() {
+        if (mockMode) {
+            log.info("Mock mode: Ingress event processing thread not started");
+            return;
+        }
+        
         log.info("Starting ingress event processing thread");
         
         while (running.get()) {
@@ -261,6 +284,11 @@ public class PaymentOrchestratorService {
      * Process ServiceResults from satellites.
      */
     private void processServiceResults() {
+        if (mockMode) {
+            log.info("Mock mode: Service results processing thread not started");
+            return;
+        }
+        
         log.info("Starting service result processing thread");
         
         while (running.get()) {
@@ -312,7 +340,9 @@ public class PaymentOrchestratorService {
         
         // Register with cancellation handler (set orchestrator reference if needed)
         if (cancellationHandler != null) {
-            cancellationHandler.setOrchestratorService(this);
+            if (cancellationHandler != null) {
+                cancellationHandler.setOrchestratorService(this);
+            }
         }
         
         // Send RCVD status notification

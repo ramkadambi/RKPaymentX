@@ -2,6 +2,7 @@ package com.wellsfargo.payment.notification;
 
 import com.wellsfargo.payment.canonical.PaymentEvent;
 import com.wellsfargo.payment.canonical.enums.Pacs002Status;
+import com.wellsfargo.payment.canonical.enums.ReturnReasonCode;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -11,20 +12,22 @@ import org.slf4j.LoggerFactory;
 import java.util.Properties;
 
 /**
- * Notification Service for publishing PACS.002 status reports.
+ * Notification Service for publishing PACS.002 status reports and PACS.004 payment returns.
  * 
  * This service publishes payment status updates to the instructing bank
  * via the notification Kafka topic. Each status update is sent as a PACS.002
- * XML message.
+ * XML message. Payment returns are sent as PACS.004 XML messages.
  */
 public class NotificationService {
     
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
     private static final String TOPIC_NOTIFICATION = "payments.notification";
+    private static final String TOPIC_PAYMENT_RETURN = "payments.return";
     
     private final String bootstrapServers;
     private KafkaProducer<String, String> producer;
     private final Pacs002Generator pacs002Generator = new Pacs002Generator();
+    private final Pacs004Generator pacs004Generator = new Pacs004Generator();
     
     /**
      * Constructor.
@@ -115,6 +118,63 @@ public class NotificationService {
      */
     public void publishStatus(PaymentEvent event, Pacs002Status status, String additionalInfo) {
         publishStatus(event, status, null, additionalInfo);
+    }
+    
+    /**
+     * Publish PACS.004 payment return message.
+     * 
+     * @param event Original PaymentEvent
+     * @param returnReasonCode ISO 20022 return reason code
+     * @param additionalInfo Additional information about the return
+     */
+    public void publishPaymentReturn(PaymentEvent event, ReturnReasonCode returnReasonCode, 
+                                     String additionalInfo) {
+        String endToEndId = event.getEndToEndId();
+        
+        try {
+            // Generate PACS.004 XML
+            String pacs004Xml = pacs004Generator.generatePacs004(event, returnReasonCode, additionalInfo);
+            
+            // Publish to payment return topic
+            ProducerRecord<String, String> record = new ProducerRecord<>(
+                TOPIC_PAYMENT_RETURN, endToEndId, pacs004Xml);
+            
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    log.error("Failed to publish PACS.004 return - E2E={}, reason={}", 
+                        endToEndId, returnReasonCode, exception);
+                } else {
+                    log.info("Published PACS.004 return - E2E={}, reason={}, topic={}, partition={}, offset={}", 
+                        endToEndId, returnReasonCode, metadata.topic(), metadata.partition(), metadata.offset());
+                }
+            });
+            
+            // Also send RJCT status via PACS.002 to indicate rejection
+            publishStatus(event, Pacs002Status.RJCT, 
+                returnReasonCode.getCode(), "Payment returned: " + additionalInfo);
+            
+        } catch (Exception e) {
+            log.error("Error publishing PACS.004 return - E2E={}, reason={}", 
+                endToEndId, returnReasonCode, e);
+        }
+    }
+    
+    /**
+     * Publish PACS.004 payment return message with reason code string.
+     * 
+     * @param event Original PaymentEvent
+     * @param returnReasonCodeString ISO 20022 return reason code string (e.g., "AC01", "RR01")
+     * @param additionalInfo Additional information about the return
+     */
+    public void publishPaymentReturn(PaymentEvent event, String returnReasonCodeString, 
+                                     String additionalInfo) {
+        try {
+            ReturnReasonCode returnReasonCode = ReturnReasonCode.fromCode(returnReasonCodeString);
+            publishPaymentReturn(event, returnReasonCode, additionalInfo);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown return reason code: {}, using NARR", returnReasonCodeString);
+            publishPaymentReturn(event, ReturnReasonCode.NARR, additionalInfo);
+        }
     }
 }
 

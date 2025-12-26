@@ -26,6 +26,12 @@ function setupEventListeners() {
         loadErrors();
     });
     
+    // Load mock data button
+    const loadMockBtn = document.getElementById('loadMockBtn');
+    if (loadMockBtn) {
+        loadMockBtn.addEventListener('click', loadMockData);
+    }
+    
     // Apply filters
     document.getElementById('applyFiltersBtn').addEventListener('click', () => {
         loadErrors();
@@ -73,6 +79,27 @@ async function loadStatistics() {
         document.getElementById('newErrors').textContent = stats.new || 0;
     } catch (error) {
         console.error('Error loading statistics:', error);
+    }
+}
+
+// Load mock data
+async function loadMockData() {
+    try {
+        const response = await fetch(`${API_BASE}/load-mock-data`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert(`Mock data loaded successfully! ${result.errorCount} errors available.`);
+            loadStatistics();
+            loadErrors();
+        } else {
+            alert(`Error loading mock data: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error loading mock data:', error);
+        alert('Error loading mock data. Please check console for details.');
     }
 }
 

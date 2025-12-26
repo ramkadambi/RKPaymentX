@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.002.001.10">
+  <FIToFIPmtStsRpt>
+    <GrpHdr>
+      <MsgId>WF-STATUS-20251225-01</MsgId>
+      <CreDtTm>2025-12-25T10:01:00</CreDtTm>
+    </GrpHdr>
+    <OrgnlGrpInfAndSts>
+      <OrgnlMsgId>HDFC-20251225-001</OrgnlMsgId>
+      <OrgnlMsgNmId>pacs.008.001.08</OrgnlMsgNmId>
+      <GrpSts>RCVD</GrpSts>
+    </OrgnlGrpInfAndSts>
+    <OrgnlPmtInfAndSts>
+      <TxInfAndSts>
+        <OrgnlInstrId>CUSTIND-A-20251225</OrgnlInstrId>
+        <OrgnlEndToEndId>INV-HDFC-WF-20251225-001</OrgnlEndToEndId>
+        <TxSts>RCVD</TxSts>
+        <StsRsnInf>
+          <Rsn>
+            <Cd>RCVD</Cd>
+          </Rsn>
+          <AddtlInf>Payment received and acknowledged</AddtlInf>
+        </StsRsnInf>
+      </TxInfAndSts>
+    </OrgnlPmtInfAndSts>
+  </FIToFIPmtStsRpt>
+</Document>

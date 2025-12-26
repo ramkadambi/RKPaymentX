@@ -11,6 +11,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -18,7 +19,6 @@ import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,8 +30,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * - Consumes camt.056 cancellation requests from payments.cancellation.in
  * - Validates that the payment can be cancelled (not yet processed)
  * - Cancels the payment and sends CANC status via PACS.002
+ * 
+ * Disabled in mock mode (error.management.mock.mode=true) since it requires Kafka.
  */
 @Service
+@ConditionalOnProperty(name = "error.management.mock.mode", havingValue = "false", matchIfMissing = true)
 public class CancellationHandler {
     
     private static final Logger log = LoggerFactory.getLogger(CancellationHandler.class);
@@ -52,10 +55,6 @@ public class CancellationHandler {
     private ExecutorService executorService;
     private final AtomicBoolean running = new AtomicBoolean(false);
     
-    public CancellationHandler(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
-    
     /**
      * Set orchestrator service for accessing payment events.
      * Called after orchestrator is initialized.
@@ -67,6 +66,9 @@ public class CancellationHandler {
     @PostConstruct
     public void init() {
         log.info("Initializing Cancellation Handler");
+        
+        // Initialize notification service
+        notificationService = new NotificationService(bootstrapServers);
         
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);

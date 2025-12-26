@@ -5,11 +5,11 @@ import com.wellsfargo.payment.canonical.ServiceResult;
 import com.wellsfargo.payment.canonical.enums.ServiceResultStatus;
 import com.wellsfargo.payment.error.ErrorActionRequest;
 import com.wellsfargo.payment.error.ErrorRecord;
-import com.wellsfargo.payment.kafka.PaymentEventDeserializer;
 import com.wellsfargo.payment.kafka.PaymentEventSerializer;
 import com.wellsfargo.payment.kafka.ServiceResultDeserializer;
 import com.wellsfargo.payment.notification.NotificationService;
-import com.wellsfargo.payment.canonical.enums.Pacs002Status;
+import com.wellsfargo.payment.notification.ReturnReasonCodeMapper;
+import com.wellsfargo.payment.canonical.enums.ReturnReasonCode;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -67,6 +67,9 @@ public class ErrorManagementService {
     @Value("${kafka.consumer.group-id:error-management-group}")
     private String groupId;
     
+    @Value("${error.management.mock.mode:false}")
+    private boolean mockMode;
+    
     // Error storage (in-memory, in production use database)
     private final Map<String, ErrorRecord> errorStore = new ConcurrentHashMap<>();
     
@@ -81,7 +84,15 @@ public class ErrorManagementService {
     
     @PostConstruct
     public void init() {
-        log.info("Initializing Error Management Service");
+        log.info("Initializing Error Management Service (mockMode={})", mockMode);
+        
+        if (mockMode) {
+            log.info("Running in MOCK MODE - Kafka consumers/producers will not be initialized");
+            // Initialize notification service for PACS.002/PACS.004 generation (but won't publish to Kafka)
+            notificationService = new NotificationService(bootstrapServers);
+            log.info("Error Management Service initialized in MOCK MODE");
+            return;
+        }
         
         // Create error consumer
         Properties consumerProps = new Properties();
@@ -271,6 +282,20 @@ public class ErrorManagementService {
         error.setUpdatedAt(Instant.now().toString());
         error.setAssignedTo(request.getPerformedBy());
         
+        if (mockMode) {
+            // In mock mode, just update status without Kafka publishing
+            log.info("Mock mode: Payment would be resumed from service={}, E2E={}", 
+                error.getServiceName(), error.getEndToEndId());
+            error.setStatus(ErrorRecord.ErrorStatus.FIXED);
+            error.setUpdatedAt(Instant.now().toString());
+            if (notificationService != null) {
+                notificationService.publishStatus(paymentEvent, 
+                    com.wellsfargo.payment.canonical.enums.Pacs002Status.ACSP, 
+                    "FIXD", "Payment fixed and resumed from " + error.getServiceName());
+            }
+            return;
+        }
+        
         // Determine which step to resume from
         String resumeTopic = getResumeTopic(error.getServiceName());
         
@@ -309,6 +334,20 @@ public class ErrorManagementService {
         error.setUpdatedAt(Instant.now().toString());
         error.setAssignedTo(request.getPerformedBy());
         
+        if (mockMode) {
+            // In mock mode, just update status without Kafka publishing
+            log.info("Mock mode: Payment would be restarted from beginning, E2E={}", error.getEndToEndId());
+            error.setStatus(ErrorRecord.ErrorStatus.RESOLVED);
+            error.setUpdatedAt(Instant.now().toString());
+            if (notificationService != null) {
+                notificationService.publishStatus(paymentEvent, 
+                    com.wellsfargo.payment.canonical.enums.Pacs002Status.RCVD, 
+                    "RSTR", "Payment restarted from beginning.");
+            }
+            log.info("Restarted E2E={} from beginning (mock mode)", error.getEndToEndId());
+            return;
+        }
+        
         // Publish to account validation (first step)
         ProducerRecord<String, PaymentEvent> record = new ProducerRecord<>(
             TOPIC_ACCOUNT_VALIDATION_IN, error.getEndToEndId(), paymentEvent);
@@ -321,7 +360,7 @@ public class ErrorManagementService {
             } else {
                 log.info("Payment restarted - errorId={}, E2E={}", 
                     request.getErrorId(), error.getEndToEndId());
-                error.setStatus(ErrorRecord.ErrorStatus.FIXED);
+                error.setStatus(ErrorRecord.ErrorStatus.RESOLVED);
             }
             error.setUpdatedAt(Instant.now().toString());
         });
@@ -329,6 +368,12 @@ public class ErrorManagementService {
     
     /**
      * Cancel and return payment.
+     * 
+     * This method:
+     * 1. Updates the error status to CANCELLED
+     * 2. Maps the UI cancellation reason to ISO 20022 return reason code
+     * 3. Generates and publishes PACS.004 payment return message
+     * 4. Sends RJCT status via PACS.002 to indicate rejection
      */
     public void cancelAndReturn(ErrorActionRequest request, PaymentEvent paymentEvent) {
         ErrorRecord error = errorStore.get(request.getErrorId());
@@ -336,22 +381,81 @@ public class ErrorManagementService {
             throw new IllegalArgumentException("Error not found: " + request.getErrorId());
         }
         
-        log.info("Cancelling and returning payment - errorId={}, E2E={}", 
-            request.getErrorId(), error.getEndToEndId());
+        log.info("Cancelling and returning payment - errorId={}, E2E={}, reason={}", 
+            request.getErrorId(), error.getEndToEndId(), request.getCancellationReason());
         
         // Update error status
         error.setStatus(ErrorRecord.ErrorStatus.CANCELLED);
         error.setUpdatedAt(Instant.now().toString());
         error.setAssignedTo(request.getPerformedBy());
-        
-        // Send CANC status via PACS.002
-        if (notificationService != null) {
-            notificationService.publishStatus(paymentEvent, Pacs002Status.CANC, 
-                "CANC", "Payment cancelled: " + request.getCancellationReason());
+        if (request.getComments() != null && !request.getComments().isEmpty()) {
+            error.setErrorContext(request.getComments());
         }
         
-        log.info("Payment cancelled - errorId={}, E2E={}", 
-            request.getErrorId(), error.getEndToEndId());
+        // Map UI cancellation reason to ISO 20022 return reason code
+        String uiCancellationReason = request.getCancellationReason();
+        if (uiCancellationReason == null || uiCancellationReason.isEmpty()) {
+            uiCancellationReason = "customer_request"; // Default
+        }
+        
+        ReturnReasonCode returnReasonCode = ReturnReasonCodeMapper.mapToIso20022Code(uiCancellationReason);
+        
+        // Build additional info for PACS.004
+        String additionalInfo = buildReturnAdditionalInfo(request, error, returnReasonCode);
+        
+        // Publish PACS.004 payment return message
+        if (notificationService != null) {
+            notificationService.publishPaymentReturn(paymentEvent, returnReasonCode, additionalInfo);
+            log.info("Published PACS.004 return - E2E={}, reasonCode={}, description={}", 
+                error.getEndToEndId(), returnReasonCode.getCode(), returnReasonCode.getDescription());
+        } else {
+            log.error("NotificationService is null, cannot publish PACS.004 return");
+        }
+        
+        log.info("Payment cancelled and returned - errorId={}, E2E={}, returnReasonCode={}", 
+            request.getErrorId(), error.getEndToEndId(), returnReasonCode.getCode());
+    }
+    
+    /**
+     * Build additional information string for PACS.004 return message.
+     */
+    private String buildReturnAdditionalInfo(ErrorActionRequest request, ErrorRecord error, 
+                                              ReturnReasonCode returnReasonCode) {
+        StringBuilder info = new StringBuilder();
+        info.append("Payment returned due to: ").append(returnReasonCode.getDescription());
+        
+        // Get error message from ServiceResult if available
+        if (error.getServiceResult() != null && 
+            error.getServiceResult().getErrorMessage() != null && 
+            !error.getServiceResult().getErrorMessage().isEmpty()) {
+            info.append(". Original error: ").append(error.getServiceResult().getErrorMessage());
+        }
+        
+        if (error.getServiceName() != null && !error.getServiceName().isEmpty()) {
+            info.append(". Failed at service: ").append(error.getServiceName());
+        }
+        
+        if (request.getComments() != null && !request.getComments().isEmpty()) {
+            info.append(". Comments: ").append(request.getComments());
+        }
+        
+        return info.toString();
+    }
+    
+    /**
+     * Add error directly to error store (for mock data loading).
+     */
+    public void addErrorDirectly(ErrorRecord error) {
+        errorStore.put(error.getErrorId(), error);
+        log.info("Error added directly to store - errorId={}, E2E={}, service={}", 
+            error.getErrorId(), error.getEndToEndId(), error.getServiceName());
+    }
+    
+    /**
+     * Load mock data for UI testing.
+     */
+    public void loadMockData() {
+        MockDataLoader.loadMockData(this);
     }
     
     /**

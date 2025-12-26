@@ -102,7 +102,39 @@ to the instructing bank via PACS.002 messages.
 
 ---
 
-### 8. Cancellation Topic
+### 8. Payment Return Topic
+
+```
+payments.return                    # PACS.004 payment return messages
+                                  # Published by: NotificationService (via ErrorManagementService)
+                                  # Consumed by: Egress services (for SWIFT delivery)
+```
+
+**Purpose**: Sends PACS.004 payment return messages when a payment is cancelled and returned 
+to the instructing bank. Includes ISO 20022 return reason codes (AC01, AC04, AC06, AM04, AM05, 
+BE04, BE05, NARR, RC01, RR01, RR02, AG01, AG02).
+
+**Return Reason Codes**:
+- **AC01**: Account identifier incorrect
+- **AC04**: Account closed
+- **AC06**: Account blocked
+- **AM04**: Insufficient funds
+- **AM05**: Duplicate payment
+- **BE04**: Incorrect creditor name
+- **BE05**: Creditor missing
+- **NARR**: Narrative reason (free-text)
+- **RC01**: Invalid bank identifier
+- **RR01**: Regulatory reason (sanctions/AML)
+- **RR02**: Regulatory reporting incomplete
+- **AG01**: Transaction forbidden
+- **AG02**: Invalid bank operation
+
+**Note**: When a PACS.004 is published, a corresponding RJCT PACS.002 status is also sent 
+to indicate the payment rejection.
+
+---
+
+### 9. Cancellation Topic
 
 ```
 payments.cancellation.in           # camt.056 cancellation requests
@@ -182,6 +214,12 @@ egress.ibt.settlement              # IBT settlement messages
 13. Cancellation Requests
     └─> payments.cancellation.in (camt.056 requests)
         └─> CancellationHandler processes and sends CANC status
+
+14. Payment Returns (Error Management UI)
+    └─> payments.return (PACS.004 payment return messages)
+        └─> Published when payment is cancelled via Error Management UI
+        └─> Includes ISO 20022 return reason code (AC01, RR01, etc.)
+        └─> Also sends RJCT PACS.002 status notification
 ```
 
 ---
@@ -269,7 +307,7 @@ done
 
 ## Summary
 
-**Total Topics Required**: 26 topics
+**Total Topics Required**: 27 topics
 
 - 1 Orchestrator input topic
 - 5 Step topics
@@ -277,11 +315,12 @@ done
 - 5 Error topics
 - 1 Final status topic
 - 1 Notification topic (PACS.002 status reports)
+- 1 Payment return topic (PACS.004 payment returns)
 - 1 Cancellation topic (camt.056 requests)
 - 4 Egress topics
 - 4 Ingress topics (optional, for Kafka-based ingress testing)
 
-**Minimum Topics for Full Cycle Testing**: 23 topics (excluding optional ingress topics)
+**Minimum Topics for Full Cycle Testing**: 24 topics (excluding optional ingress topics)
 
 ---
 
