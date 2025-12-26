@@ -126,4 +126,4 @@
 ---
 
 **For detailed instructions, see: OPERATOR_TRAINING_GUIDE.md**
-
+image.png

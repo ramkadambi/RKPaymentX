@@ -29,7 +29,7 @@ This document analyzes whether the payment engine code aligns with the stated bu
 | Source | Format | Status | Implementation |
 |--------|--------|--------|----------------|
 | SWIFT from other banks | PACS.008 or PACS.009 | ✅ **ALIGNED** | `SwiftIngressService` handles both message types |
-| Wells customers (internal) | PACS.008 | ✅ **ALIGNED** | `IbtIngressService` handles internal PACS.008 |
+| Wells customers (internal) | PACS.008 | ✅ **ALIGNED** | `WellsIngressService` handles Wells-originated PACS.008 |
 | Fed wire | PACS.008 or PACS.009 | ✅ **ALIGNED** | `FedIngressService` handles both PACS.008 (customer-initiated) and PACS.009 (bank-to-bank) |
 | Chips wire | PACS.008 or PACS.009 | ✅ **ALIGNED** | `ChipsIngressService` handles both PACS.008 (customer-initiated) and PACS.009 (bank-to-bank) |
 
@@ -123,7 +123,7 @@ And similarly for `WF-PACS009-R1-INTERNAL-CREDIT`.
 | Service | Input Format | Output | Status |
 |---------|--------------|--------|--------|
 | `SwiftIngressService` | PACS.008/PACS.009 | `PaymentEvent` → `payments.orchestrator.in` | ✅ |
-| `IbtIngressService` | PACS.008 | `PaymentEvent` → `payments.orchestrator.in` | ✅ |
+| `WellsIngressService` | PACS.008 | `PaymentEvent` → `payments.orchestrator.in` | ✅ |
 | `FedIngressService` | PACS.009 | `PaymentEvent` → `payments.orchestrator.in` | ✅ |
 | `ChipsIngressService` | PACS.009 | `PaymentEvent` → `payments.orchestrator.in` | ✅ |
 

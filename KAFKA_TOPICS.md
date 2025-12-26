@@ -22,7 +22,7 @@ These topics are used by ingress services that consume from Kafka (not the CLI-b
 ingress.swift.in          # SWIFT messages (PACS.008/PACS.009)
 ingress.fed.in            # FED messages (PACS.008/PACS.009)
 ingress.chips.in          # CHIPS messages (PACS.008/PACS.009)
-ingress.ibt.in            # IBT messages (PACS.008)
+ingress.wells.in          # Wells-originated messages (PACS.008) - Payments starting within Wells Fargo
 ```
 
 **Note**: The CLI-based `SwiftIngressService` publishes directly to `payments.orchestrator.in` and does NOT consume from `ingress.swift.in`.

@@ -28,6 +28,7 @@ public class NotificationService {
     private KafkaProducer<String, String> producer;
     private final Pacs002Generator pacs002Generator = new Pacs002Generator();
     private final Pacs004Generator pacs004Generator = new Pacs004Generator();
+    private String lastPacs004Xml; // Store last generated PACS.004 for message ID extraction
     
     /**
      * Constructor.
@@ -132,8 +133,9 @@ public class NotificationService {
         String endToEndId = event.getEndToEndId();
         
         try {
-            // Generate PACS.004 XML
-            String pacs004Xml = pacs004Generator.generatePacs004(event, returnReasonCode, additionalInfo);
+            // Generate PACS.004 XML (store for message ID extraction)
+            lastPacs004Xml = pacs004Generator.generatePacs004(event, returnReasonCode, additionalInfo);
+            String pacs004Xml = lastPacs004Xml;
             
             // Publish to payment return topic
             ProducerRecord<String, String> record = new ProducerRecord<>(
@@ -175,6 +177,84 @@ public class NotificationService {
             log.warn("Unknown return reason code: {}, using NARR", returnReasonCodeString);
             publishPaymentReturn(event, ReturnReasonCode.NARR, additionalInfo);
         }
+    }
+    
+    /**
+     * Publish PACS.004 payment return message with fees and settlement date.
+     * 
+     * @param event Original PaymentEvent
+     * @param returnReasonCode ISO 20022 return reason code
+     * @param additionalInfo Additional information about the return
+     * @param returnAmount Return amount (may be less than original if fees deducted)
+     * @param returnFees Processing fees (if any)
+     * @param settlementDate Settlement date for the return
+     */
+    public void publishPaymentReturnWithFees(PaymentEvent event, ReturnReasonCode returnReasonCode,
+                                             String additionalInfo, String returnAmount,
+                                             String returnFees, String settlementDate) {
+        String endToEndId = event.getEndToEndId();
+        
+        try {
+            // Generate PACS.004 XML with fees
+            lastPacs004Xml = pacs004Generator.generatePacs004(event, returnReasonCode.getCode(), 
+                additionalInfo, returnAmount, returnFees, settlementDate);
+            
+            // Publish to payment return topic
+            ProducerRecord<String, String> record = new ProducerRecord<>(
+                TOPIC_PAYMENT_RETURN, endToEndId, lastPacs004Xml);
+            
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    log.error("Failed to publish PACS.004 return with fees - E2E={}, reason={}", 
+                        endToEndId, returnReasonCode, exception);
+                } else {
+                    log.info("Published PACS.004 return with fees - E2E={}, reason={}, amount={}, fees={}, topic={}, partition={}, offset={}", 
+                        endToEndId, returnReasonCode, returnAmount, returnFees, 
+                        metadata.topic(), metadata.partition(), metadata.offset());
+                }
+            });
+            
+            // Also send RJCT status via PACS.002 to indicate rejection
+            publishStatus(event, Pacs002Status.RJCT, 
+                returnReasonCode.getCode(), "Payment returned: " + additionalInfo);
+            
+        } catch (Exception e) {
+            log.error("Error publishing PACS.004 return with fees - E2E={}, reason={}", 
+                endToEndId, returnReasonCode, e);
+        }
+    }
+    
+    /**
+     * Publish camt.029 Resolution of Investigation message.
+     * 
+     * @param camt029Xml camt.029 XML message
+     * @param endToEndId End-to-end ID for Kafka key
+     */
+    public void publishCamt029(String camt029Xml, String endToEndId) {
+        try {
+            // Publish to notification topic (same as PACS.002)
+            ProducerRecord<String, String> record = new ProducerRecord<>(
+                TOPIC_NOTIFICATION, endToEndId, camt029Xml);
+            
+            producer.send(record, (metadata, exception) -> {
+                if (exception != null) {
+                    log.error("Failed to publish camt.029 - E2E={}", endToEndId, exception);
+                } else {
+                    log.info("Published camt.029 - E2E={}, topic={}, partition={}, offset={}", 
+                        endToEndId, metadata.topic(), metadata.partition(), metadata.offset());
+                }
+            });
+            
+        } catch (Exception e) {
+            log.error("Error publishing camt.029 - E2E={}", endToEndId, e);
+        }
+    }
+    
+    /**
+     * Get last generated PACS.004 XML (for message ID extraction).
+     */
+    public String getLastPacs004Xml() {
+        return lastPacs004Xml;
     }
 }
 

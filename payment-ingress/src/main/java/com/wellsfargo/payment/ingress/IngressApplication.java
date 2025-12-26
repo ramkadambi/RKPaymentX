@@ -12,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * - SwiftIngressService (pacs.008, pacs.009)
  * - FedIngressService (pacs.009)
  * - ChipsIngressService (pacs.009)
- * - IbtIngressService (pacs.008)
+ * - WellsIngressService (pacs.008) - Payments originating within Wells Fargo
  * 
  * Each service:
  * - Parses rail-specific messages

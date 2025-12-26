@@ -34,6 +34,126 @@ public class Pacs004Generator {
     }
     
     /**
+     * Generate PACS.004 payment return XML with fees and settlement date support.
+     * 
+     * @param event Original PaymentEvent
+     * @param returnReasonCode ISO 20022 return reason code string (e.g., "AC01", "RR01", etc.)
+     * @param additionalInfo Additional information about the return
+     * @param returnAmount Return amount (may be less than original if fees deducted)
+     * @param returnFees Processing fees (if any)
+     * @param settlementDate Settlement date for the return
+     * @return PACS.004 XML message
+     */
+    public String generatePacs004(PaymentEvent event, String returnReasonCode, 
+                                   String additionalInfo, String returnAmount, 
+                                   String returnFees, String settlementDate) {
+        try {
+            String msgId = generateMessageId(event);
+            String creDtTm = Instant.now().toString();
+            String originalMsgId = event.getMsgId() != null ? event.getMsgId() : "";
+            String originalMsgNmId = getOriginalMessageNameId(event);
+            String originalInstrId = event.getEndToEndId() != null ? event.getEndToEndId() : "";
+            String originalEndToEndId = event.getEndToEndId() != null ? event.getEndToEndId() : "";
+            String returnId = generateReturnId(event);
+            String currency = event.getCurrency() != null ? event.getCurrency() : "USD";
+            
+            // Use provided return amount or default to original amount
+            if (returnAmount == null || returnAmount.isEmpty()) {
+                returnAmount = event.getAmount() != null ? event.getAmount().toString() : "0.00";
+            }
+            
+            // Default settlement date to today if not provided
+            if (settlementDate == null || settlementDate.isEmpty()) {
+                settlementDate = Instant.now().toString();
+            }
+            
+            // Default additional info if not provided
+            if (additionalInfo == null || additionalInfo.isEmpty()) {
+                additionalInfo = "Payment returned: " + returnReasonCode;
+                if (returnFees != null && !returnFees.isEmpty()) {
+                    additionalInfo += " (Processing fee: " + returnFees + " " + currency + ")";
+                }
+            }
+            
+            StringBuilder xml = new StringBuilder();
+            xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+            xml.append("<Document xmlns=\"").append(NAMESPACE).append("\">\n");
+            xml.append("  <PmtRtr>\n");
+            
+            // Group Header
+            xml.append("    <GrpHdr>\n");
+            xml.append("      <MsgId>").append(escapeXml(msgId)).append("</MsgId>\n");
+            xml.append("      <CreDtTm>").append(escapeXml(creDtTm)).append("</CreDtTm>\n");
+            xml.append("    </GrpHdr>\n");
+            
+            // Original Group Information
+            xml.append("    <OrgnlGrpInf>\n");
+            xml.append("      <OrgnlMsgId>").append(escapeXml(originalMsgId)).append("</OrgnlMsgId>\n");
+            xml.append("      <OrgnlMsgNmId>").append(escapeXml(originalMsgNmId)).append("</OrgnlMsgNmId>\n");
+            xml.append("      <OrgnlCreDtTm>").append(escapeXml(event.getCreatedTimestamp() != null ? 
+                event.getCreatedTimestamp() : creDtTm)).append("</OrgnlCreDtTm>\n");
+            xml.append("    </OrgnlGrpInf>\n");
+            
+            // Transaction Information
+            xml.append("    <TxInf>\n");
+            xml.append("      <OrgnlInstrId>").append(escapeXml(originalInstrId)).append("</OrgnlInstrId>\n");
+            xml.append("      <OrgnlEndToEndId>").append(escapeXml(originalEndToEndId)).append("</OrgnlEndToEndId>\n");
+            xml.append("      <OrgnlTxId>").append(escapeXml(event.getEndToEndId())).append("</OrgnlTxId>\n");
+            xml.append("      <RtrId>").append(escapeXml(returnId)).append("</RtrId>\n");
+            
+            // Return Reason Information
+            xml.append("      <RtrRsnInf>\n");
+            xml.append("        <Orgtr>\n");
+            xml.append("          <Nm>Wells Fargo Bank</Nm>\n");
+            xml.append("        </Orgtr>\n");
+            xml.append("        <Rsn>\n");
+            xml.append("          <Cd>").append(escapeXml(returnReasonCode)).append("</Cd>\n");
+            xml.append("        </Rsn>\n");
+            xml.append("        <AddtlInf>").append(escapeXml(additionalInfo)).append("</AddtlInf>\n");
+            xml.append("      </RtrRsnInf>\n");
+            
+            // Return Amount (may be less than original if fees deducted)
+            xml.append("      <RtrdIntrBkSttlmAmt Ccy=\"").append(escapeXml(currency)).append("\">")
+                .append(escapeXml(returnAmount)).append("</RtrdIntrBkSttlmAmt>\n");
+            
+            // Settlement Date
+            xml.append("      <IntrBkSttlmDt>").append(escapeXml(settlementDate)).append("</IntrBkSttlmDt>\n");
+            
+            // Original Transaction Reference
+            xml.append("      <OrgnlTxRef>\n");
+            xml.append("        <IntrBkSttlmAmt Ccy=\"").append(escapeXml(currency)).append("\">")
+                .append(escapeXml(event.getAmount() != null ? event.getAmount().toString() : "0.00"))
+                .append("</IntrBkSttlmAmt>\n");
+            if (event.getDebtorAgent() != null && event.getDebtorAgent().getIdValue() != null) {
+                xml.append("        <DbtrAgt>\n");
+                xml.append("          <FinInstnId>\n");
+                xml.append("            <BICFI>").append(escapeXml(event.getDebtorAgent().getIdValue())).append("</BICFI>\n");
+                xml.append("          </FinInstnId>\n");
+                xml.append("        </DbtrAgt>\n");
+            }
+            if (event.getCreditorAgent() != null && event.getCreditorAgent().getIdValue() != null) {
+                xml.append("        <CdtrAgt>\n");
+                xml.append("          <FinInstnId>\n");
+                xml.append("            <BICFI>").append(escapeXml(event.getCreditorAgent().getIdValue())).append("</BICFI>\n");
+                xml.append("          </FinInstnId>\n");
+                xml.append("        </CdtrAgt>\n");
+            }
+            xml.append("      </OrgnlTxRef>\n");
+            
+            xml.append("    </TxInf>\n");
+            xml.append("  </PmtRtr>\n");
+            xml.append("</Document>");
+            
+            return xml.toString();
+            
+        } catch (Exception e) {
+            log.error("Failed to generate PACS.004 message for E2E={}", 
+                event.getEndToEndId(), e);
+            throw new RuntimeException("Failed to generate PACS.004 message", e);
+        }
+    }
+    
+    /**
      * Generate PACS.004 payment return XML from PaymentEvent and return reason code string.
      * 
      * @param event Original PaymentEvent

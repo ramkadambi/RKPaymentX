@@ -149,6 +149,12 @@ public class FedIngressService extends BaseIngressService {
     private void handleMessage(String rawMessage) {
         log.info("Received FED message: length={}", rawMessage.length());
         
+        // Check if this is a cancellation message (camt.055 or camt.056)
+        if (routeCancellationMessageIfNeeded(rawMessage)) {
+            log.info("Message routed to cancellation handler - skipping payment parsing");
+            return;
+        }
+        
         PaymentEvent event = parseMessage(rawMessage);
         
         if (event != null) {

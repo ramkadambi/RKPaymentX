@@ -21,7 +21,7 @@ All ingress services are designed to handle both PACS.008 and PACS.009 messages:
 | **SwiftIngressService** | Customer-initiated payments from external banks | Bank-to-bank transfers from external banks |
 | **FedIngressService** | Wells customers via API/portal/branch (routed via Fed) | Bank-to-bank transfers via Fed network |
 | **ChipsIngressService** | Wells customers via API/portal/branch (routed via Chips) | Bank-to-bank transfers via Chips network |
-| **IbtIngressService** | Wells customers via API/portal/branch (internal transfers) | N/A (internal only) |
+| **WellsIngressService** | Wells customers via API/portal/branch (Wells-originated payments) | N/A (Wells-originated only) |
 
 ### Message Type Detection
 

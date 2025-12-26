@@ -26,24 +26,30 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * IBT (Internal Bank Transfer) Ingress Service.
+ * Wells Ingress Service.
+ * 
+ * Handles payments that originate within Wells Fargo (internally initiated).
  * 
  * Handles:
  * - pacs.008 (Customer Credit Transfer)
  * 
- * Parses IBT messages and converts to canonical PaymentEvent.
+ * Note: This service is for payments that START within Wells Fargo.
+ * The routing logic will determine if the payment goes out via FED, SWIFT, 
+ * or stays internal (IBT) based on the creditor party.
+ * 
+ * Parses Wells-originated messages and converts to canonical PaymentEvent.
  * Publishes to payments.orchestrator.in.
  */
 @Service
-public class IbtIngressService extends BaseIngressService {
+public class WellsIngressService extends BaseIngressService {
     
-    private static final Logger log = LoggerFactory.getLogger(IbtIngressService.class);
-    private static final String TOPIC_INPUT = "ingress.ibt.in";
+    private static final Logger log = LoggerFactory.getLogger(WellsIngressService.class);
+    private static final String TOPIC_INPUT = "ingress.wells.in";
     
     @Value("${kafka.bootstrap.servers:localhost:9092}")
     private String bootstrapServers;
     
-    @Value("${kafka.consumer.group-id:ibt-ingress-group}")
+    @Value("${kafka.consumer.group-id:wells-ingress-group}")
     private String groupId;
     
     @Value("${kafka.consumer.auto-offset-reset:earliest}")
@@ -53,13 +59,13 @@ public class IbtIngressService extends BaseIngressService {
     private ExecutorService executorService;
     private final AtomicBoolean running = new AtomicBoolean(false);
     
-    public IbtIngressService(@Value("${kafka.bootstrap.servers:localhost:9092}") String bootstrapServers) {
+    public WellsIngressService(@Value("${kafka.bootstrap.servers:localhost:9092}") String bootstrapServers) {
         super(bootstrapServers, MessageSource.ISO20022_PACS008, PaymentDirection.INTERNAL);
     }
     
     @PostConstruct
     public void init() {
-        log.info("Initializing IBT Ingress Service");
+        log.info("Initializing Wells Ingress Service");
         
         // Create consumer
         Properties consumerProps = new Properties();
@@ -79,12 +85,12 @@ public class IbtIngressService extends BaseIngressService {
         executorService = Executors.newSingleThreadExecutor();
         executorService.submit(this::processMessages);
         
-        log.info("IBT Ingress Service initialized and started");
+        log.info("Wells Ingress Service initialized and started");
     }
     
     @PreDestroy
     public void shutdown() {
-        log.info("Shutting down IBT Ingress Service");
+        log.info("Shutting down Wells Ingress Service");
         
         running.set(false);
         
@@ -106,14 +112,14 @@ public class IbtIngressService extends BaseIngressService {
         
         close();
         
-        log.info("IBT Ingress Service shut down");
+        log.info("Wells Ingress Service shut down");
     }
     
     /**
      * Process messages from Kafka.
      */
     private void processMessages() {
-        log.info("Starting IBT ingress message processing thread");
+        log.info("Starting Wells ingress message processing thread");
         
         while (running.get()) {
             try {
@@ -136,26 +142,32 @@ public class IbtIngressService extends BaseIngressService {
             }
         }
         
-        log.info("IBT ingress message processing thread stopped");
+        log.info("Wells ingress message processing thread stopped");
     }
     
     /**
      * Handle incoming message.
      */
     private void handleMessage(String rawMessage) {
-        log.info("Received IBT message: length={}", rawMessage.length());
+        log.info("Received Wells-originated message: length={}", rawMessage.length());
+        
+        // Check if this is a cancellation message (camt.055 or camt.056)
+        if (routeCancellationMessageIfNeeded(rawMessage)) {
+            log.info("Message routed to cancellation handler - skipping payment parsing");
+            return;
+        }
         
         PaymentEvent event = parseMessage(rawMessage);
         
         if (event != null) {
             publishToOrchestrator(event);
         } else {
-            log.error("Failed to parse IBT message");
+            log.error("Failed to parse Wells-originated message");
         }
     }
     
     /**
-     * Parse IBT message (pacs.008) and convert to PaymentEvent.
+     * Parse Wells-originated message (pacs.008) and convert to PaymentEvent.
      * 
      * This is a mock implementation. In production, this would:
      * 1. Parse XML/JSON pacs.008 message
@@ -177,34 +189,35 @@ public class IbtIngressService extends BaseIngressService {
             // - Creditor from CdtTrfTxInf/Cdtr
             
             // Mock implementation: Generate from raw message hash
-            String msgId = "IBT-" + Math.abs(rawMessage.hashCode());
-            String endToEndId = "E2E-IBT-" + Math.abs(rawMessage.hashCode());
+            String msgId = "WELLS-" + Math.abs(rawMessage.hashCode());
+            String endToEndId = "E2E-WELLS-" + Math.abs(rawMessage.hashCode());
             
             // Create base event
             PaymentEvent event = createBasePaymentEvent(msgId, endToEndId, rawMessage);
             
             // Mock agent extraction (in production, parse from message)
-            // IBT is internal, so both agents are Wells Fargo
+            // Debtor agent is Wells Fargo (payment originates from Wells)
+            // Creditor agent will be determined by routing logic
             Agent debtorAgent = Agent.builder()
                 .idScheme("BIC")
-                .idValue("WFBIUS6SXXX") // Mock: Wells Fargo
+                .idValue("WFBIUS6SXXX") // Mock: Wells Fargo (debtor)
                 .country("US")
                 .build();
             
             Agent creditorAgent = Agent.builder()
                 .idScheme("BIC")
-                .idValue("WFBIUS6SXXX") // Mock: Wells Fargo
+                .idValue("WFBIUS6SXXX") // Mock: Will be determined by routing logic
                 .country("US")
                 .build();
             
             // Mock party extraction (in production, parse from message)
             Party debtor = Party.builder()
-                .name("Internal Debtor")
+                .name("Wells Fargo Customer")
                 .country("US")
                 .build();
             
             Party creditor = Party.builder()
-                .name("Internal Creditor")
+                .name("Creditor") // Will be determined by routing logic
                 .country("US")
                 .build();
             
@@ -227,9 +240,8 @@ public class IbtIngressService extends BaseIngressService {
                 .build();
             
         } catch (Exception e) {
-            log.error("Failed to parse IBT message", e);
+            log.error("Failed to parse Wells-originated message", e);
             return null;
         }
     }
 }
-
