@@ -1,0 +1,233 @@
+{
+  "metadata": {
+    "description": "US Bank Capabilities and Correspondent Relationships",
+    "data_sources": [
+      "Federal Reserve E-Payments Routing Directory",
+      "CHIPS Participant Directory",
+      "SWIFT/Accuity Bankers Almanac"
+    ],
+    "version": "1.0",
+    "last_updated": "2025-01-15"
+  },
+  "us_banks": {
+    "WFBIUS6S": {
+      "bank_name": "Wells Fargo Bank NA",
+      "bank_category": "CHIPS_PARTICIPANT",
+      "chips_enabled": true,
+      "chips_uid": "0001",
+      "fed_enabled": true,
+      "aba_routing": "121000248",
+      "country": "US",
+      "state": "CA",
+      "city": "San Francisco",
+      "description": "CHIPS participant - All CHIPS participants are automatically FED-enabled"
+    },
+    "CHASUS33": {
+      "bank_name": "JPMorgan Chase Bank NA",
+      "bank_category": "CHIPS_PARTICIPANT",
+      "chips_enabled": true,
+      "chips_uid": "0002",
+      "fed_enabled": true,
+      "aba_routing": "021000021",
+      "country": "US",
+      "state": "NY",
+      "city": "New York",
+      "description": "CHIPS participant - One of the largest US banks, JPMC"
+    },
+    "BOFAUS3N": {
+      "bank_name": "Bank of America NA",
+      "bank_category": "CHIPS_PARTICIPANT",
+      "chips_enabled": true,
+      "chips_uid": "0003",
+      "fed_enabled": true,
+      "aba_routing": "026009593",
+      "country": "US",
+      "state": "NC",
+      "city": "Charlotte",
+      "description": "CHIPS participant - Major US bank"
+    },
+    "CITIUS33": {
+      "bank_name": "Citibank NA",
+      "bank_category": "CHIPS_PARTICIPANT",
+      "chips_enabled": true,
+      "chips_uid": "0004",
+      "fed_enabled": true,
+      "aba_routing": "021000089",
+      "country": "US",
+      "state": "NY",
+      "city": "New York",
+      "description": "CHIPS participant - Major US bank"
+    },
+    "USBKUS44": {
+      "bank_name": "U.S. Bank NA",
+      "bank_category": "FED_ENABLED",
+      "chips_enabled": false,
+      "fed_enabled": true,
+      "aba_routing": "091000019",
+      "country": "US",
+      "state": "MN",
+      "city": "Minneapolis",
+      "description": "FED-enabled regional bank (non-CHIPS participant)"
+    },
+    "PNCCUS33": {
+      "bank_name": "PNC Bank NA",
+      "bank_category": "FED_ENABLED",
+      "chips_enabled": false,
+      "fed_enabled": true,
+      "aba_routing": "043000096",
+      "country": "US",
+      "state": "PA",
+      "city": "Pittsburgh",
+      "description": "FED-enabled regional bank (non-CHIPS participant)"
+    },
+    "TRUSUS33": {
+      "bank_name": "Truist Bank",
+      "bank_category": "FED_ENABLED",
+      "chips_enabled": false,
+      "fed_enabled": true,
+      "aba_routing": "053000196",
+      "country": "US",
+      "state": "NC",
+      "city": "Charlotte",
+      "description": "FED-enabled regional bank (non-CHIPS participant) - Used as correspondent for credit unions"
+    },
+    "ICCUUS33": {
+      "bank_name": "Idaho Central Credit Union",
+      "bank_category": "NON_FED_ENABLED",
+      "chips_enabled": false,
+      "fed_enabled": false,
+      "aba_routing": "324173742",
+      "country": "US",
+      "state": "ID",
+      "city": "Chubbuck",
+      "description": "Largest credit union in Idaho - Does not have FED settlement account license",
+      "correspondent_bank": {
+        "bic": "USBKUS44",
+        "bank_name": "U.S. Bank NA",
+        "fed_enabled": true,
+        "chips_enabled": false,
+        "relationship_type": "CORRESPONDENT",
+        "settlement_method": "FED",
+        "description": "U.S. Bank acts as correspondent for Idaho Central Credit Union FED settlements"
+      }
+    },
+    "SCFCUS33": {
+      "bank_name": "South Carolina Federal Credit Union",
+      "bank_category": "NON_FED_ENABLED",
+      "chips_enabled": false,
+      "fed_enabled": false,
+      "aba_routing": "253279831",
+      "country": "US",
+      "state": "SC",
+      "city": "Charleston",
+      "description": "Prominent credit union serving Charleston, SC area - Does not have FED settlement account license",
+      "correspondent_bank": {
+        "bic": "TRUSUS33",
+        "bank_name": "Truist Bank",
+        "fed_enabled": true,
+        "chips_enabled": false,
+        "relationship_type": "CORRESPONDENT",
+        "settlement_method": "FED",
+        "description": "Truist Bank acts as correspondent for South Carolina Federal Credit Union FED settlements"
+      }
+    },
+    "BECUUS33": {
+      "bank_name": "Boeing Employees Credit Union",
+      "bank_category": "NON_FED_ENABLED",
+      "chips_enabled": false,
+      "fed_enabled": false,
+      "aba_routing": "325081403",
+      "country": "US",
+      "state": "WA",
+      "city": "Seattle",
+      "description": "Large credit union - Does not have FED settlement account license",
+      "correspondent_bank": {
+        "bic": "BOFAUS3N",
+        "bank_name": "Bank of America NA",
+        "fed_enabled": true,
+        "chips_enabled": true,
+        "relationship_type": "CORRESPONDENT",
+        "settlement_method": "FED",
+        "description": "Bank of America acts as correspondent for BECU FED settlements"
+      }
+    },
+    "NFCUUS33": {
+      "bank_name": "Navy Federal Credit Union",
+      "bank_category": "NON_FED_ENABLED",
+      "chips_enabled": false,
+      "fed_enabled": false,
+      "aba_routing": "256074974",
+      "country": "US",
+      "state": "VA",
+      "city": "Vienna",
+      "description": "Largest credit union in the US - Does not have FED settlement account license",
+      "correspondent_bank": {
+        "bic": "CHASUS33",
+        "bank_name": "JPMorgan Chase Bank NA",
+        "fed_enabled": true,
+        "chips_enabled": true,
+        "relationship_type": "CORRESPONDENT",
+        "settlement_method": "FED",
+        "description": "JPMorgan Chase acts as correspondent for Navy Federal Credit Union FED settlements"
+      }
+    }
+  },
+  "bank_categories": {
+    "CHIPS_PARTICIPANT": {
+      "description": "Large banks (~47) that are CHIPS participants. All are automatically FED-enabled.",
+      "characteristics": [
+        "Direct CHIPS access",
+        "Direct FED settlement account",
+        "Can route via CHIPS (cheaper) or FED (faster)",
+        "No correspondent bank needed"
+      ],
+      "examples": ["JPMorgan Chase", "Wells Fargo", "Bank of America", "Citibank"]
+    },
+    "FED_ENABLED": {
+      "description": "Regional and mid-size banks that are FED-enabled but not CHIPS participants.",
+      "characteristics": [
+        "Direct FED settlement account",
+        "No CHIPS access",
+        "Route via FED only",
+        "No correspondent bank needed"
+      ],
+      "examples": ["U.S. Bank", "PNC Bank", "Truist Bank"]
+    },
+    "NON_FED_ENABLED": {
+      "description": "Small banks, credit unions, and AUs that do not have FED settlement account license.",
+      "characteristics": [
+        "No direct FED settlement account",
+        "No CHIPS access",
+        "Require correspondent bank (FED-enabled) for settlement",
+        "Route via FED using correspondent's settlement account"
+      ],
+      "examples": ["Idaho Central Credit Union", "South Carolina Federal Credit Union", "Navy Federal Credit Union"]
+    }
+  },
+  "routing_rules": {
+    "chips_participant": {
+      "fed_enabled": true,
+      "chips_enabled": true,
+      "requires_correspondent": false,
+      "routing_options": ["CHIPS", "FED"],
+      "default_network": "CHIPS",
+      "fallback_network": "FED"
+    },
+    "fed_enabled_non_chips": {
+      "fed_enabled": true,
+      "chips_enabled": false,
+      "requires_correspondent": false,
+      "routing_options": ["FED"],
+      "default_network": "FED"
+    },
+    "non_fed_enabled": {
+      "fed_enabled": false,
+      "chips_enabled": false,
+      "requires_correspondent": true,
+      "routing_options": ["FED"],
+      "default_network": "FED",
+      "settlement_via": "correspondent_bank"
+    }
+  }
+}
+

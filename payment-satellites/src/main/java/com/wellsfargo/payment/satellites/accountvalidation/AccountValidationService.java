@@ -306,6 +306,24 @@ public class AccountValidationService {
             enrichment.put("preferred_correspondent", data.getPreferredCorrespondent());
         }
         
+        // Add correspondent bank information for non-FED-enabled banks
+        if (data.isRequiresCorrespondent()) {
+            enrichment.put("requires_correspondent", true);
+            enrichment.put("correspondent_bank_bic", data.getCorrespondentBankBic());
+            enrichment.put("correspondent_bank_name", data.getCorrespondentBankName());
+            enrichment.put("correspondent_fed_enabled", data.isCorrespondentFedEnabled());
+            enrichment.put("correspondent_chips_enabled", data.isCorrespondentChipsEnabled());
+            log.info("Bank requires correspondent: creditor={}, correspondent={}", 
+                creditorBic, data.getCorrespondentBankBic());
+        } else {
+            enrichment.put("requires_correspondent", false);
+        }
+        
+        // Add bank category for routing decisions
+        if (data.getBankCategory() != null) {
+            enrichment.put("bank_category", data.getBankCategory());
+        }
+        
         return enrichment;
     }
     

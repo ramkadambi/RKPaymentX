@@ -2,6 +2,8 @@ package com.wellsfargo.payment.satellites.accountvalidation;
 
 import com.wellsfargo.payment.canonical.enums.CreditorType;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,9 +21,14 @@ import java.util.Optional;
  * - preferred_correspondent
  * - nostro_accounts_available
  * - vostro_with_us (whether bank has vostro account with Wells Fargo)
+ * - correspondent bank information (for non-FED-enabled banks)
  */
 @Slf4j
+@Component
 public class AccountLookupService {
+    
+    @Autowired(required = false)
+    private BankCapabilitiesLookupService bankCapabilitiesLookupService;
     
     // Mock reference data: creditor BIC8 -> enrichment data
     // In production, this would be a MongoDB collection or Redis cache
@@ -108,6 +115,8 @@ public class AccountLookupService {
     /**
      * Lookup account enrichment data by creditor BIC.
      * 
+     * First checks bank_capabilities.json for US banks, then falls back to static lookup.
+     * 
      * @param creditorBic Creditor bank BIC (BIC8 or BIC11 format)
      * @return Optional AccountEnrichmentData or empty if not found
      */
@@ -122,6 +131,17 @@ public class AccountLookupService {
             bic8 = bic8.substring(0, 8);
         }
         
+        // First, try bank capabilities lookup (for US banks with correspondent relationships)
+        if (bankCapabilitiesLookupService != null) {
+            Optional<BankCapabilitiesLookupService.BankCapability> capability = 
+                bankCapabilitiesLookupService.lookupBankCapability(bic8);
+            
+            if (capability.isPresent()) {
+                return Optional.of(convertCapabilityToEnrichmentData(capability.get()));
+            }
+        }
+        
+        // Fall back to static lookup (for foreign banks and legacy data)
         AccountEnrichmentData data = ACCOUNT_LOOKUP.get(bic8);
         if (data == null) {
             log.debug("Account not found in lookup for BIC: {}", creditorBic);
@@ -129,6 +149,50 @@ public class AccountLookupService {
         }
         
         return Optional.of(data);
+    }
+    
+    /**
+     * Convert BankCapability to AccountEnrichmentData.
+     */
+    private AccountEnrichmentData convertCapabilityToEnrichmentData(
+            BankCapabilitiesLookupService.BankCapability capability) {
+        
+        AccountEnrichmentData.AccountEnrichmentDataBuilder builder = AccountEnrichmentData.builder()
+            .creditorType(CreditorType.BANK)
+            .fedMember(capability.isFedEnabled())
+            .chipsMember(capability.isChipsEnabled())
+            .bankCategory(capability.getBankCategory());
+        
+        // Determine nostro/vostro availability based on bank type
+        // CHIPS participants and FED-enabled banks typically have nostro accounts
+        boolean hasNostro = capability.isFedEnabled() || capability.isChipsEnabled();
+        builder.nostroAccountsAvailable(hasNostro);
+        
+        // Vostro accounts are typically for foreign banks, but some US banks may have them
+        // For now, assume CHIPS participants have vostro accounts with Wells
+        builder.vostroWithUs(capability.isChipsEnabled());
+        
+        // Set preferred correspondent (self for direct access, or correspondent for non-FED)
+        if (capability.isFedEnabled()) {
+            builder.preferredCorrespondent(capability.getBic() + "XXX");
+        } else if (capability.getCorrespondentBank() != null) {
+            BankCapabilitiesLookupService.CorrespondentBank correspondent = capability.getCorrespondentBank();
+            builder.preferredCorrespondent(correspondent.getBic() + "XXX");
+        }
+        
+        // Set correspondent bank information if required
+        if (capability.getCorrespondentBank() != null) {
+            BankCapabilitiesLookupService.CorrespondentBank correspondent = capability.getCorrespondentBank();
+            builder.requiresCorrespondent(true)
+                .correspondentBankBic(correspondent.getBic())
+                .correspondentBankName(correspondent.getBankName())
+                .correspondentFedEnabled(correspondent.isFedEnabled())
+                .correspondentChipsEnabled(correspondent.isChipsEnabled());
+        } else {
+            builder.requiresCorrespondent(false);
+        }
+        
+        return builder.build();
     }
 }
 

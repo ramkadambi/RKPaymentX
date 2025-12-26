@@ -331,8 +331,41 @@ public class RoutingValidationService {
             agentChain.addAll(existingContext.getAgentChain());
         }
         
-        // Note: Agent insertion/substitution would be handled here if rule actions specify it
-        // For now, we preserve the existing agent chain
+        // Check if correspondent bank is required (for non-FED-enabled banks)
+        RoutingNetwork finalNetwork = ruleResult.getSelectedNetwork() != null 
+            ? ruleResult.getSelectedNetwork() 
+            : RoutingNetwork.SWIFT;
+        
+        if (event.getEnrichmentContext() != null && 
+            event.getEnrichmentContext().getAccountValidation() != null) {
+            
+            Map<String, Object> accountValidation = event.getEnrichmentContext().getAccountValidation();
+            Boolean requiresCorrespondent = (Boolean) accountValidation.get("requires_correspondent");
+            
+            if (Boolean.TRUE.equals(requiresCorrespondent)) {
+                String correspondentBic = (String) accountValidation.get("correspondent_bank_bic");
+                String correspondentName = (String) accountValidation.get("correspondent_bank_name");
+                
+                if (correspondentBic != null && !correspondentBic.isEmpty()) {
+                    // Create intermediary agent for correspondent bank
+                    Agent correspondentAgent = Agent.builder()
+                        .idScheme("BIC")
+                        .idValue(correspondentBic)
+                        .name(correspondentName != null ? correspondentName : "Correspondent Bank")
+                        .country("US") // Correspondent banks for US settlements are US-based
+                        .build();
+                    
+                    // Insert correspondent bank at the beginning of agent chain
+                    agentChain.add(0, correspondentAgent);
+                    
+                    // Force FED routing when correspondent is used
+                    finalNetwork = RoutingNetwork.FED;
+                    
+                    log.info("Inserted correspondent bank as intermediary: bic={}, name={}, forced_network=FED", 
+                        correspondentBic, correspondentName);
+                }
+            }
+        }
         
         // Build payment ecosystem context (for optimization rules)
         Map<String, Object> paymentEcosystem = new HashMap<>();
@@ -354,9 +387,7 @@ public class RoutingValidationService {
         
         // Create RoutingContext
         return RoutingContext.builder()
-            .selectedNetwork(ruleResult.getSelectedNetwork() != null 
-                ? ruleResult.getSelectedNetwork() 
-                : RoutingNetwork.SWIFT)
+            .selectedNetwork(finalNetwork)
             .routingRuleApplied(ruleResult.getAppliedRuleId())
             .routingRulePriority(ruleResult.getAppliedRulePriority())
             .agentChain(agentChain.isEmpty() ? null : agentChain)

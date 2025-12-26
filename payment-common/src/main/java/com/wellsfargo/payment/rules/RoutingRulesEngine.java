@@ -135,15 +135,32 @@ public class RoutingRulesEngine {
         if (event.getRoutingContext() != null && event.getRoutingContext().getNextBank() != null) {
             ctx.put("next_bank", event.getRoutingContext().getNextBank());
         } else if (event.getEnrichmentContext() != null) {
-            // Populate next_bank from bicLookup if available (for PACS.008 scenarios)
+            // Populate next_bank from account validation (preferred) or bicLookup (fallback)
+            Map<String, Object> accountValidation = event.getEnrichmentContext().getAccountValidation();
             Map<String, Object> bicLookup = event.getEnrichmentContext().getBicLookup();
-            if (bicLookup != null && event.getCreditorAgent() != null) {
+            
+            if (event.getCreditorAgent() != null) {
                 String creditorBic = event.getCreditorAgent().getIdValue();
                 Map<String, Object> nextBank = new HashMap<>();
                 nextBank.put("bic", creditorBic);
-                nextBank.put("chips_id_exists", bicLookup.containsKey("chips_uid") && bicLookup.get("chips_uid") != null);
-                nextBank.put("aba_exists", bicLookup.containsKey("aba_routing") && bicLookup.get("aba_routing") != null);
-                nextBank.put("country", bicLookup.get("country"));
+                
+                // Prefer account validation data (fed_enabled, chips_enabled) over bicLookup
+                if (accountValidation != null) {
+                    nextBank.put("fed_enabled", accountValidation.getOrDefault("fed_member", false));
+                    nextBank.put("chips_enabled", accountValidation.getOrDefault("chips_member", false));
+                    nextBank.put("requires_correspondent", accountValidation.getOrDefault("requires_correspondent", false));
+                }
+                
+                // Fallback to bicLookup for chips_id_exists and aba_exists (legacy support)
+                if (bicLookup != null) {
+                    nextBank.put("chips_id_exists", bicLookup.containsKey("chips_uid") && bicLookup.get("chips_uid") != null);
+                    nextBank.put("aba_exists", bicLookup.containsKey("aba_routing") && bicLookup.get("aba_routing") != null);
+                    nextBank.put("country", bicLookup.get("country"));
+                } else if (accountValidation != null) {
+                    // Use account validation country if available
+                    // Note: country might not be in account validation, so this is optional
+                }
+                
                 ctx.put("next_bank", nextBank);
             }
         }
