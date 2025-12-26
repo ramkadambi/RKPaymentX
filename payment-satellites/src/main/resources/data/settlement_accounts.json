@@ -1,0 +1,229 @@
+{
+  "fed_settlement_account": {
+    "account_number": "WF-FED-SETTLE-001",
+    "account_name": "Wells Fargo FED Settlement Account",
+    "routing_number": "121000248",
+    "currency": "USD",
+    "account_type": "FED"
+  },
+  "vostro_accounts": {
+    "SBININBB": {
+      "account_number": "WF-VOSTRO-SBI-USD-001",
+      "account_name": "State Bank of India Vostro Account",
+      "currency": "USD",
+      "bank_name": "State Bank of India",
+      "bank_bic": "SBININBB",
+      "country": "IN",
+      "account_type": "VOSTRO"
+    },
+    "DEUTDEFF": {
+      "account_number": "WF-VOSTRO-DEUT-USD-001",
+      "account_name": "Deutsche Bank AG Vostro Account",
+      "currency": "USD",
+      "bank_name": "Deutsche Bank AG",
+      "bank_bic": "DEUTDEFF",
+      "country": "DE",
+      "account_type": "VOSTRO"
+    },
+    "HSBCGB2L": {
+      "account_number": "WF-VOSTRO-HSBC-USD-001",
+      "account_name": "HSBC Bank plc Vostro Account",
+      "currency": "USD",
+      "bank_name": "HSBC Bank plc",
+      "bank_bic": "HSBCGB2L",
+      "country": "GB",
+      "account_type": "VOSTRO"
+    },
+    "BAMXMXMM": {
+      "account_number": "WF-VOSTRO-BANAMEX-USD-001",
+      "account_name": "Banco Nacional de Mexico Vostro Account",
+      "currency": "USD",
+      "bank_name": "Banco Nacional de Mexico",
+      "bank_bic": "BAMXMXMM",
+      "country": "MX",
+      "account_type": "VOSTRO"
+    },
+    "SCBLUS33": {
+      "account_number": "WF-VOSTRO-SCBL-USD-001",
+      "account_name": "Standard Chartered Bank Vostro Account",
+      "currency": "USD",
+      "bank_name": "Standard Chartered Bank",
+      "bank_bic": "SCBLUS33",
+      "country": "GB",
+      "account_type": "VOSTRO"
+    },
+    "HDFCINBB": {
+      "account_number": "WF-VOSTRO-HDFC-USD-001",
+      "account_name": "HDFC Bank Limited Vostro Account",
+      "currency": "USD",
+      "bank_name": "HDFC Bank Limited",
+      "bank_bic": "HDFCINBB",
+      "country": "IN",
+      "account_type": "VOSTRO"
+    }
+  },
+  "chips_nostro_accounts": {
+    "CHASUS33": {
+      "account_number": "WF-CHIPS-NOSTRO-CHASE-001",
+      "account_name": "JPMorgan Chase Bank NA CHIPS Nostro Account",
+      "currency": "USD",
+      "bank_name": "JPMorgan Chase Bank NA",
+      "bank_bic": "CHASUS33",
+      "chips_uid": "0002",
+      "country": "US",
+      "account_type": "CHIPS_NOSTRO"
+    },
+    "BOFAUS3N": {
+      "account_number": "WF-CHIPS-NOSTRO-BOFA-001",
+      "account_name": "Bank of America NA CHIPS Nostro Account",
+      "currency": "USD",
+      "bank_name": "Bank of America NA",
+      "bank_bic": "BOFAUS3N",
+      "chips_uid": "0003",
+      "country": "US",
+      "account_type": "CHIPS_NOSTRO"
+    },
+    "CITIUS33": {
+      "account_number": "WF-CHIPS-NOSTRO-CITI-001",
+      "account_name": "Citibank NA CHIPS Nostro Account",
+      "currency": "USD",
+      "bank_name": "Citibank NA",
+      "bank_bic": "CITIUS33",
+      "chips_uid": "0004",
+      "country": "US",
+      "account_type": "CHIPS_NOSTRO"
+    },
+    "DEUTDEFF": {
+      "account_number": "WF-CHIPS-NOSTRO-DEUT-001",
+      "account_name": "Deutsche Bank AG CHIPS Nostro Account",
+      "currency": "USD",
+      "bank_name": "Deutsche Bank AG",
+      "bank_bic": "DEUTDEFF",
+      "chips_uid": "0407",
+      "country": "DE",
+      "account_type": "CHIPS_NOSTRO"
+    },
+    "HSBCGB2L": {
+      "account_number": "WF-CHIPS-NOSTRO-HSBC-001",
+      "account_name": "HSBC Bank plc CHIPS Nostro Account",
+      "currency": "USD",
+      "bank_name": "HSBC Bank plc",
+      "bank_bic": "HSBCGB2L",
+      "chips_uid": "0408",
+      "country": "GB",
+      "account_type": "CHIPS_NOSTRO"
+    }
+  },
+  "swift_nostro_accounts": {
+    "BAMXMXMM": [
+      {
+        "account_number": "WF-SWIFT-NOSTRO-BANAMEX-USD-001",
+        "account_name": "Banco Nacional de Mexico Nostro Account (USD)",
+        "currency": "USD",
+        "bank_name": "Banco Nacional de Mexico",
+        "bank_bic": "BAMXMXMM",
+        "country": "MX",
+        "account_type": "SWIFT_NOSTRO"
+      },
+      {
+        "account_number": "WF-SWIFT-NOSTRO-BANAMEX-MXN-001",
+        "account_name": "Banco Nacional de Mexico Nostro Account (MXN)",
+        "currency": "MXN",
+        "bank_name": "Banco Nacional de Mexico",
+        "bank_bic": "BAMXMXMM",
+        "country": "MX",
+        "account_type": "SWIFT_NOSTRO"
+      }
+    ],
+    "SBININBB": [
+      {
+        "account_number": "WF-SWIFT-NOSTRO-SBI-USD-001",
+        "account_name": "State Bank of India Nostro Account (USD)",
+        "currency": "USD",
+        "bank_name": "State Bank of India",
+        "bank_bic": "SBININBB",
+        "country": "IN",
+        "account_type": "SWIFT_NOSTRO"
+      },
+      {
+        "account_number": "WF-SWIFT-NOSTRO-SBI-INR-001",
+        "account_name": "State Bank of India Nostro Account (INR)",
+        "currency": "INR",
+        "bank_name": "State Bank of India",
+        "bank_bic": "SBININBB",
+        "country": "IN",
+        "account_type": "SWIFT_NOSTRO"
+      }
+    ],
+    "DEUTDEFF": [
+      {
+        "account_number": "WF-SWIFT-NOSTRO-DEUT-USD-001",
+        "account_name": "Deutsche Bank AG Nostro Account (USD)",
+        "currency": "USD",
+        "bank_name": "Deutsche Bank AG",
+        "bank_bic": "DEUTDEFF",
+        "country": "DE",
+        "account_type": "SWIFT_NOSTRO"
+      },
+      {
+        "account_number": "WF-SWIFT-NOSTRO-DEUT-EUR-001",
+        "account_name": "Deutsche Bank AG Nostro Account (EUR)",
+        "currency": "EUR",
+        "bank_name": "Deutsche Bank AG",
+        "bank_bic": "DEUTDEFF",
+        "country": "DE",
+        "account_type": "SWIFT_NOSTRO"
+      }
+    ],
+    "HSBCGB2L": [
+      {
+        "account_number": "WF-SWIFT-NOSTRO-HSBC-USD-001",
+        "account_name": "HSBC Bank plc Nostro Account (USD)",
+        "currency": "USD",
+        "bank_name": "HSBC Bank plc",
+        "bank_bic": "HSBCGB2L",
+        "country": "GB",
+        "account_type": "SWIFT_NOSTRO"
+      },
+      {
+        "account_number": "WF-SWIFT-NOSTRO-HSBC-GBP-001",
+        "account_name": "HSBC Bank plc Nostro Account (GBP)",
+        "currency": "GBP",
+        "bank_name": "HSBC Bank plc",
+        "bank_bic": "HSBCGB2L",
+        "country": "GB",
+        "account_type": "SWIFT_NOSTRO"
+      }
+    ],
+    "SCBLUS33": {
+      "account_number": "WF-SWIFT-NOSTRO-SCBL-USD-001",
+      "account_name": "Standard Chartered Bank Nostro Account",
+      "currency": "USD",
+      "bank_name": "Standard Chartered Bank",
+      "bank_bic": "SCBLUS33",
+      "country": "GB",
+      "account_type": "SWIFT_NOSTRO"
+    },
+    "HDFCINBB": [
+      {
+        "account_number": "WF-SWIFT-NOSTRO-HDFC-USD-001",
+        "account_name": "HDFC Bank Limited Nostro Account (USD)",
+        "currency": "USD",
+        "bank_name": "HDFC Bank Limited",
+        "bank_bic": "HDFCINBB",
+        "country": "IN",
+        "account_type": "SWIFT_NOSTRO"
+      },
+      {
+        "account_number": "WF-SWIFT-NOSTRO-HDFC-INR-001",
+        "account_name": "HDFC Bank Limited Nostro Account (INR)",
+        "currency": "INR",
+        "bank_name": "HDFC Bank Limited",
+        "bank_bic": "HDFCINBB",
+        "country": "IN",
+        "account_type": "SWIFT_NOSTRO"
+      }
+    ]
+  }
+}
+

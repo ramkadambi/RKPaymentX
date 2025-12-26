@@ -380,11 +380,17 @@ public class PaymentPostingService {
         RoutingNetwork selectedNetwork = routingContext.getSelectedNetwork();
         String debtorBic = normalizeBic(event.getDebtorAgent() != null ? event.getDebtorAgent().getIdValue() : null);
         String creditorBic = normalizeBic(event.getCreditorAgent() != null ? event.getCreditorAgent().getIdValue() : null);
-        String debtorCountry = event.getDebtorAgent() != null ? event.getDebtorAgent().getCountry() : "";
-        String creditorCountry = event.getCreditorAgent() != null ? event.getCreditorAgent().getCountry() : "";
+        String paymentCurrency = event.getCurrency() != null ? event.getCurrency() : "USD";
         
-        boolean isInbound = !"US".equals(debtorCountry) && WELLS_BIC.equals(creditorBic);
-        boolean isOutbound = WELLS_BIC.equals(debtorBic) && !"US".equals(creditorCountry);
+        // Determine payment direction
+        // Inbound: Foreign bank (debtor) sending to Wells Fargo (creditor)
+        boolean isInbound = !WELLS_BIC.equals(normalizeBic(debtorBic)) && WELLS_BIC.equals(normalizeBic(creditorBic));
+        // Outbound: Wells Fargo (debtor) sending to foreign bank (creditor)
+        boolean isOutbound = WELLS_BIC.equals(normalizeBic(debtorBic)) && !WELLS_BIC.equals(normalizeBic(creditorBic));
+        
+        // Check if creditor is Wells customer (for inbound payments)
+        // If creditor agent BIC is Wells Fargo, the beneficiary is a Wells customer
+        boolean creditorIsWellsCustomer = WELLS_BIC.equals(normalizeBic(creditorBic));
         
         String debitAccount = null;
         String debitAccountType = null;
@@ -415,11 +421,9 @@ public class PaymentPostingService {
             }
         } else if (selectedNetwork == RoutingNetwork.FED) {
             // FED: Federal Reserve Network
-            Map<String, String> fedAccount = settlementAccountLookupService.lookupFedAccount();
-            creditAccount = fedAccount.get("account_number");
-            creditAccountType = "FED";
-            
             if (isInbound) {
+                // Inbound FED payment
+                // Debit: Instructing bank's vostro account (always)
                 Optional<Map<String, Object>> vostro = settlementAccountLookupService.lookupVostroAccount(debtorBic);
                 if (vostro.isPresent()) {
                     debitAccount = (String) vostro.get().get("account_number");
@@ -428,25 +432,34 @@ public class PaymentPostingService {
                     debitAccount = debtorBic;
                     debitAccountType = "CUSTOMER";
                 }
+                
+                // Credit: Based on beneficiary
+                if (creditorIsWellsCustomer) {
+                    // Beneficiary is Wells customer - credit to customer account
+                    creditAccount = creditorBic;
+                    creditAccountType = "CUSTOMER";
+                } else {
+                    // Beneficiary is at another bank - credit to FED settlement account
+                    Map<String, String> fedAccount = settlementAccountLookupService.lookupFedAccount();
+                    creditAccount = fedAccount.get("account_number");
+                    creditAccountType = "FED";
+                }
             } else {
+                // Wells-initiated outbound FED payment
+                // Debit: Wells customer account
                 debitAccount = debtorBic;
                 debitAccountType = "CUSTOMER";
-            }
-        } else if (selectedNetwork == RoutingNetwork.CHIPS) {
-            // CHIPS: Clearing House Interbank Payments System
-            Optional<Map<String, Object>> chipsNostro = 
-                settlementAccountLookupService.lookupChipsNostroAccount(creditorBic);
-            if (chipsNostro.isPresent()) {
-                creditAccount = (String) chipsNostro.get().get("account_number");
-                creditAccountType = "CHIPS_NOSTRO";
-            } else {
-                // No CHIPS nostro - use FED account
+                
+                // Credit: FED settlement account
                 Map<String, String> fedAccount = settlementAccountLookupService.lookupFedAccount();
                 creditAccount = fedAccount.get("account_number");
                 creditAccountType = "FED";
             }
-            
+        } else if (selectedNetwork == RoutingNetwork.CHIPS) {
+            // CHIPS: Clearing House Interbank Payments System
             if (isInbound) {
+                // Inbound CHIPS payment
+                // Debit: Instructing bank's vostro account (always)
                 Optional<Map<String, Object>> vostro = settlementAccountLookupService.lookupVostroAccount(debtorBic);
                 if (vostro.isPresent()) {
                     debitAccount = (String) vostro.get().get("account_number");
@@ -455,15 +468,56 @@ public class PaymentPostingService {
                     debitAccount = debtorBic;
                     debitAccountType = "CUSTOMER";
                 }
+                
+                // Credit: Based on beneficiary
+                if (creditorIsWellsCustomer) {
+                    // Beneficiary is Wells customer - credit to customer account
+                    creditAccount = creditorBic;
+                    creditAccountType = "CUSTOMER";
+                } else {
+                    // Beneficiary is at another bank - credit to receiving bank's CHIPS nostro
+                    Optional<Map<String, Object>> chipsNostro = 
+                        settlementAccountLookupService.lookupChipsNostroAccount(creditorBic);
+                    if (chipsNostro.isPresent()) {
+                        creditAccount = (String) chipsNostro.get().get("account_number");
+                        creditAccountType = "CHIPS_NOSTRO";
+                    } else {
+                        // No CHIPS nostro - use FED account as fallback
+                        Map<String, String> fedAccount = settlementAccountLookupService.lookupFedAccount();
+                        creditAccount = fedAccount.get("account_number");
+                        creditAccountType = "FED";
+                    }
+                }
             } else {
+                // Wells-initiated outbound CHIPS payment
+                // Debit: Wells customer account
                 debitAccount = debtorBic;
                 debitAccountType = "CUSTOMER";
+                
+                // Credit: Receiving bank's CHIPS nostro account
+                Optional<Map<String, Object>> chipsNostro = 
+                    settlementAccountLookupService.lookupChipsNostroAccount(creditorBic);
+                if (chipsNostro.isPresent()) {
+                    creditAccount = (String) chipsNostro.get().get("account_number");
+                    creditAccountType = "CHIPS_NOSTRO";
+                } else {
+                    // No CHIPS nostro - use FED account as fallback
+                    Map<String, String> fedAccount = settlementAccountLookupService.lookupFedAccount();
+                    creditAccount = fedAccount.get("account_number");
+                    creditAccountType = "FED";
+                }
             }
         } else if (selectedNetwork == RoutingNetwork.SWIFT) {
             // SWIFT: International payment network
             if (isOutbound) {
+                // Wells-initiated outbound SWIFT payment
+                // Debit: Wells customer account
+                debitAccount = debtorBic;
+                debitAccountType = "CUSTOMER";
+                
+                // Credit: Receiving bank's SWIFT nostro account (in payment currency)
                 Optional<Map<String, Object>> swiftNostro = 
-                    settlementAccountLookupService.lookupSwiftOutNostroAccount(creditorBic);
+                    settlementAccountLookupService.lookupSwiftNostroAccount(creditorBic, paymentCurrency);
                 if (swiftNostro.isPresent()) {
                     creditAccount = (String) swiftNostro.get().get("account_number");
                     creditAccountType = "SWIFT_NOSTRO";
@@ -471,10 +525,9 @@ public class PaymentPostingService {
                     creditAccount = creditorBic;
                     creditAccountType = "EXTERNAL";
                 }
-                debitAccount = debtorBic;
-                debitAccountType = "CUSTOMER";
             } else {
-                // Inbound SWIFT
+                // Inbound SWIFT payment
+                // Debit: Instructing bank's vostro account (always)
                 Optional<Map<String, Object>> vostro = settlementAccountLookupService.lookupVostroAccount(debtorBic);
                 if (vostro.isPresent()) {
                     debitAccount = (String) vostro.get().get("account_number");
@@ -483,8 +536,26 @@ public class PaymentPostingService {
                     debitAccount = debtorBic;
                     debitAccountType = "CUSTOMER";
                 }
-                creditAccount = creditorBic;
-                creditAccountType = "CUSTOMER";
+                
+                // Credit: Based on beneficiary and routing decision
+                if (creditorIsWellsCustomer) {
+                    // Beneficiary is Wells customer - credit to customer account
+                    creditAccount = creditorBic;
+                    creditAccountType = "CUSTOMER";
+                } else {
+                    // Beneficiary is at another bank - use routing decision
+                    // For SWIFT inbound, if routing is SWIFT, credit to receiving bank's SWIFT nostro
+                    Optional<Map<String, Object>> swiftNostro = 
+                        settlementAccountLookupService.lookupSwiftNostroAccount(creditorBic, paymentCurrency);
+                    if (swiftNostro.isPresent()) {
+                        creditAccount = (String) swiftNostro.get().get("account_number");
+                        creditAccountType = "SWIFT_NOSTRO";
+                    } else {
+                        // Fallback: credit to creditor BIC (external)
+                        creditAccount = creditorBic;
+                        creditAccountType = "EXTERNAL";
+                    }
+                }
             }
         } else {
             // Unknown network - use default
@@ -626,9 +697,16 @@ public class PaymentPostingService {
     }
     
     /**
+     * Determine settlement accounts (public method for testing).
+     */
+    public SettlementAccountInfo determineSettlementAccountsPublic(PaymentEvent event) {
+        return determineSettlementAccounts(event);
+    }
+    
+    /**
      * Settlement account information.
      */
-    private static class SettlementAccountInfo {
+    public static class SettlementAccountInfo {
         private final String debitAccount;
         private final String debitAccountType;
         private final String creditAccount;
