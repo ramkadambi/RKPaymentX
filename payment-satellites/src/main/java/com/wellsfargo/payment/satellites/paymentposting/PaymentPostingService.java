@@ -314,24 +314,32 @@ public class PaymentPostingService {
         // Create timestamp
         String timestamp = Instant.now().toString();
         
-        // Create explicit debit entry
+        // Determine amounts for posting
+        // Debit: Always use original amount (InstdAmt) - customer is debited full amount
+        // Credit: Use settlement amount (IntrBkSttlmAmt) if available, otherwise original amount
+        BigDecimal debitAmount = event.getAmount(); // Original amount (InstdAmt)
+        BigDecimal creditAmount = event.getSettlementAmount() != null 
+            ? event.getSettlementAmount()  // Settlement amount after fees (IntrBkSttlmAmt)
+            : event.getAmount();  // Fallback to original if settlement amount not set
+        
+        // Create explicit debit entry (always original amount)
         PostingEntry debitEntry = PostingEntry.builder()
             .endToEndId(event.getEndToEndId())
             .side(EntrySide.DEBIT)
             .agentId(debtorBic)
-            .amount(event.getAmount())
+            .amount(debitAmount)
             .currency(event.getCurrency())
             .settlementAccount(settlementInfo.getDebitAccount())
             .accountType(settlementInfo.getDebitAccountType())
             .timestamp(timestamp)
             .build();
         
-        // Create explicit credit entry
+        // Create explicit credit entry (settlement amount after fees)
         PostingEntry creditEntry = PostingEntry.builder()
             .endToEndId(event.getEndToEndId())
             .side(EntrySide.CREDIT)
             .agentId(creditorBic)
-            .amount(event.getAmount())
+            .amount(creditAmount)
             .currency(event.getCurrency())
             .settlementAccount(settlementInfo.getCreditAccount())
             .accountType(settlementInfo.getCreditAccountType())

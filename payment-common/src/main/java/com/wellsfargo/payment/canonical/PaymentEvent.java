@@ -55,11 +55,20 @@ public class PaymentEvent {
     private String transactionId;
 
     /**
-     * Payment amount.
+     * Payment amount (instructed amount - original amount from customer).
+     * This corresponds to <InstdAmt> in PACS.008 and should never change.
      */
     @NotNull
     @Positive
     private BigDecimal amount;
+
+    /**
+     * Interbank settlement amount (amount after fee deductions).
+     * This corresponds to <IntrBkSttlmAmt> in PACS.008.
+     * If fees are deducted from principal, this will be less than amount.
+     * If fees are billed separately (OUR/DEBT), this equals amount.
+     */
+    private BigDecimal settlementAmount;
 
     /**
      * ISO 4217 currency code (e.g., USD, EUR).

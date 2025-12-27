@@ -99,5 +99,22 @@ public class EnrichmentContext {
      * }
      */
     private Map<String, Object> settlementAccounts;
+
+    /**
+     * Fee calculation information.
+     * Structure: {
+     *   "fee_amount": String (BigDecimal as string),
+     *   "fee_currency": String,
+     *   "is_negotiated_fee": boolean,
+     *   "fee_type": String (e.g., "inbound_swift", "outbound_fed"),
+     *   "charge_bearer": String (OUR/DEBT/SHA/SHAR/CRED),
+     *   "deduct_from_principal": boolean,
+     *   "fee_settlement": String (DEDUCTED or BILLING),
+     *   "instructed_amount": String (original amount - InstdAmt),
+     *   "settlement_amount": String (amount after fees - IntrBkSttlmAmt),
+     *   "bank_bic": String
+     * }
+     */
+    private Map<String, Object> feeCalculation;
 }
 

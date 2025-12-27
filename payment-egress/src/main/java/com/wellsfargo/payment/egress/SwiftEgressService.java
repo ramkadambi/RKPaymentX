@@ -201,8 +201,20 @@ public class SwiftEgressService extends BaseEgressService {
                 message.append("    <PmtId>\n");
                 message.append("      <EndToEndId>").append(event.getEndToEndId()).append("</EndToEndId>\n");
                 message.append("    </PmtId>\n");
+                
+                // Amount block: Include both InstdAmt (original) and IntrBkSttlmAmt (settlement)
+                message.append("    <Amt>\n");
+                // InstdAmt: Original amount from customer (never changes)
+                message.append("      <InstdAmt Ccy=\"").append(event.getCurrency()).append("\">")
+                    .append(event.getAmount()).append("</InstdAmt>\n");
+                message.append("    </Amt>\n");
+                
+                // IntrBkSttlmAmt: Settlement amount after fee deductions
+                java.math.BigDecimal settlementAmount = event.getSettlementAmount() != null 
+                    ? event.getSettlementAmount() 
+                    : event.getAmount(); // Fallback to original amount if settlement amount not set
                 message.append("    <IntrBkSttlmAmt Ccy=\"").append(event.getCurrency()).append("\">")
-                    .append(event.getAmount()).append("</IntrBkSttlmAmt>\n");
+                    .append(settlementAmount).append("</IntrBkSttlmAmt>\n");
                 
                 if (event.getDebtorAgent() != null) {
                     message.append("    <DbtrAgt>\n");
@@ -230,6 +242,35 @@ public class SwiftEgressService extends BaseEgressService {
                     message.append("    <Cdtr>\n");
                     message.append("      <Nm>").append(event.getCreditor().getName()).append("</Nm>\n");
                     message.append("    </Cdtr>\n");
+                }
+                
+                // Add Charges Information (ChrgsInf) if fees were deducted
+                if (event.getEnrichmentContext() != null && 
+                    event.getEnrichmentContext().getFeeCalculation() != null) {
+                    java.util.Map<String, Object> feeInfo = event.getEnrichmentContext().getFeeCalculation();
+                    Boolean deductFromPrincipal = (Boolean) feeInfo.get("deduct_from_principal");
+                    
+                    if (Boolean.TRUE.equals(deductFromPrincipal)) {
+                        String feeAmount = (String) feeInfo.get("fee_amount");
+                        String feeCurrency = (String) feeInfo.get("fee_currency");
+                        String bankBic = (String) feeInfo.get("bank_bic");
+                        
+                        if (feeAmount != null && feeCurrency != null) {
+                            message.append("    <ChrgsInf>\n");
+                            message.append("      <Amt Ccy=\"").append(feeCurrency).append("\">")
+                                .append(feeAmount).append("</Amt>\n");
+                            
+                            // Add agent (bank that took the fee) - use Wells Fargo BIC if bankBic not available
+                            String agentBic = (bankBic != null && !bankBic.isEmpty()) ? bankBic : "WFBIUS6SXXX";
+                            message.append("      <Agt>\n");
+                            message.append("        <FinInstnId>\n");
+                            message.append("          <BIC>").append(agentBic).append("</BIC>\n");
+                            message.append("        </FinInstnId>\n");
+                            message.append("      </Agt>\n");
+                            
+                            message.append("    </ChrgsInf>\n");
+                        }
+                    }
                 }
                 
                 message.append("  </CdtTrfTxInf>\n");

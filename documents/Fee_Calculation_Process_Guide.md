@@ -147,6 +147,41 @@ The system follows this priority order when determining which fee to apply:
 
 ---
 
+## PACS.008 Amount Fields
+
+### InstdAmt (Instructed Amount)
+- **Definition**: Original amount sent by the customer
+- **Behavior**: **NEVER changes** - always preserved as the original amount
+- **Purpose**: Represents what the customer instructed to pay
+- **Example**: Customer sends $10,000.00 → InstdAmt = $10,000.00 (always)
+
+### IntrBkSttlmAmt (Interbank Settlement Amount)
+- **Definition**: Amount that will actually be settled between banks
+- **Behavior**: **Changes based on fee deductions**
+  - If fees are deducted (SHA/SHAR/CRED): IntrBkSttlmAmt = InstdAmt - Fee
+  - If fees are billed separately (OUR/DEBT): IntrBkSttlmAmt = InstdAmt (unchanged)
+- **Purpose**: Represents the net amount after fee deductions
+- **Example**: 
+  - Customer sends $10,000.00, Fee $20.00 (SHA)
+  - InstdAmt = $10,000.00 (preserved)
+  - IntrBkSttlmAmt = $9,980.00 (after fee deduction)
+
+### ChrgsInf (Charges Information)
+- **Definition**: Block containing fee details when fees are deducted
+- **Structure**:
+  ```xml
+  <ChrgsInf>
+      <Amt Ccy="USD">20.00</Amt>  <!-- Fee amount -->
+      <Agt>
+          <FinInstnId>
+              <BIC>WFBIUS6SXXX</BIC>  <!-- Bank that took the fee -->
+          </FinInstnId>
+      </Agt>
+  </ChrgsInf>
+  ```
+- **When Populated**: Only when fees are deducted from principal (SHA/SHAR/CRED)
+- **When NOT Populated**: When fees are billed separately (OUR/DEBT)
+
 ## Fee Application Rules
 
 ### Rule 1: Fee Amount Determination
@@ -175,14 +210,40 @@ Based on charge bearer code:
 | SHA / SHAR | ✅ YES | DEDUCTED (from principal) |
 | CRED | ✅ YES | DEDUCTED (from principal) |
 
-### Rule 3: Net Amount Calculation
+### Rule 3: Amount Field Assignment
 
 ```
-If deductFromPrincipal = TRUE:
-    Net Amount = Original Amount - Fee Amount
+InstdAmt (Instructed Amount):
+    = Original Amount (ALWAYS preserved, never changes)
 
-If deductFromPrincipal = FALSE:
-    Net Amount = Original Amount (unchanged)
+IntrBkSttlmAmt (Interbank Settlement Amount):
+    If deductFromPrincipal = TRUE (SHA/SHAR/CRED):
+        = Original Amount - Fee Amount
+    If deductFromPrincipal = FALSE (OUR/DEBT):
+        = Original Amount (unchanged, fees billed separately)
+```
+
+### Rule 4: PACS.008 Message Structure
+
+When generating PACS.008 messages:
+
+```xml
+<CdtTrfTxInf>
+    <Amt>
+        <InstdAmt Ccy="USD">10000.00</InstdAmt>  <!-- Original amount - NEVER changes -->
+    </Amt>
+    <IntrBkSttlmAmt Ccy="USD">9980.00</IntrBkSttlmAmt>  <!-- After fee deduction -->
+    
+    <!-- ChrgsInf only included if fees were deducted -->
+    <ChrgsInf>
+        <Amt Ccy="USD">20.00</Amt>
+        <Agt>
+            <FinInstnId>
+                <BIC>WFBIUS6SXXX</BIC>
+            </FinInstnId>
+        </Agt>
+    </ChrgsInf>
+</CdtTrfTxInf>
 ```
 
 ---
@@ -206,10 +267,17 @@ If deductFromPrincipal = FALSE:
    - Check negotiated fees for HDFCINBB → Found: $20.00
    - ✅ **Negotiated Fee Applied**: $20.00 (instead of default $25.00)
 4. Charge Bearer: SHA → Deduct from principal: YES
-5. Net Amount: $10,000.00 - $20.00 = **$9,980.00**
+5. Settlement Amount: $10,000.00 - $20.00 = **$9,980.00**
+
+**PACS.008 Message Fields**:
+- **InstdAmt**: $10,000.00 (original amount - preserved)
+- **IntrBkSttlmAmt**: $9,980.00 (settlement amount after fee deduction)
+- **ChrgsInf**: Included with fee amount $20.00 and Wells Fargo BIC
 
 **Result**:
 - Fee Amount: **$20.00** (negotiated)
+- InstdAmt: **$10,000.00** (preserved - original amount)
+- IntrBkSttlmAmt: **$9,980.00** (after fee deduction)
 - Beneficiary Receives: **$9,980.00**
 - Fee is deducted from principal
 
@@ -309,10 +377,17 @@ If deductFromPrincipal = FALSE:
 3. Fee Lookup:
    - ✅ **Negotiated Fee Applied**: $20.00
 4. Charge Bearer: OUR → Deduct from principal: **NO**
-5. Net Amount: $10,000.00 (unchanged)
+5. Settlement Amount: $10,000.00 (unchanged - fees billed separately)
+
+**PACS.008 Message Fields**:
+- **InstdAmt**: $10,000.00 (original amount - preserved)
+- **IntrBkSttlmAmt**: $10,000.00 (equals InstdAmt - fees NOT deducted)
+- **ChrgsInf**: NOT included (fees billed separately)
 
 **Result**:
 - Fee Amount: **$20.00** (negotiated)
+- InstdAmt: **$10,000.00** (preserved - original amount)
+- IntrBkSttlmAmt: **$10,000.00** (equals InstdAmt - no deduction)
 - Beneficiary Receives: **$10,000.00** (full amount - fee NOT deducted)
 - Fee Settlement: **BILLING** (HDFC Bank is billed separately)
 
