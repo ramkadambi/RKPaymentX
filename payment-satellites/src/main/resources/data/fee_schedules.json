@@ -1,0 +1,160 @@
+{
+  "metadata": {
+    "description": "Fee Schedules for Payment Processing",
+    "fee_types": {
+      "OUR": "Sender pays all fees - fees not deducted from principal",
+      "DEBT": "Sender pays all fees - fees not deducted from principal (same as OUR)",
+      "SHA": "Shared fees - fees deducted from principal, split between parties",
+      "SHAR": "Shared fees - fees deducted from principal, split between parties (same as SHA)",
+      "CRED": "Receiver pays all fees - all fees deducted from principal"
+    },
+    "version": "1.0",
+    "last_updated": "2025-01-15"
+  },
+  "default_fees": {
+    "description": "Default fee schedule applicable to all banks when no negotiated fee exists",
+    "currency": "USD",
+    "fees": {
+      "inbound_swift": {
+        "description": "Fee for processing inbound SWIFT payment",
+        "amount": "25.00",
+        "currency": "USD"
+      },
+      "inbound_fed": {
+        "description": "Fee for processing inbound FED payment",
+        "amount": "15.00",
+        "currency": "USD"
+      },
+      "inbound_chips": {
+        "description": "Fee for processing inbound CHIPS payment",
+        "amount": "10.00",
+        "currency": "USD"
+      },
+      "outbound_swift": {
+        "description": "Fee for processing outbound SWIFT payment",
+        "amount": "30.00",
+        "currency": "USD"
+      },
+      "outbound_fed": {
+        "description": "Fee for processing outbound FED payment",
+        "amount": "20.00",
+        "currency": "USD"
+      },
+      "outbound_chips": {
+        "description": "Fee for processing outbound CHIPS payment",
+        "amount": "15.00",
+        "currency": "USD"
+      },
+      "correspondent_processing": {
+        "description": "Fee for correspondent bank processing (when intermediary is used)",
+        "amount": "10.00",
+        "currency": "USD"
+      }
+    }
+  },
+  "negotiated_fees": {
+    "description": "Relationship-specific negotiated fees with specific banks",
+    "fee_schedules": {
+      "HDFCINBB": {
+        "bank_name": "HDFC Bank Limited",
+        "bank_bic": "HDFCINBB",
+        "relationship_type": "CORRESPONDENT",
+        "description": "Negotiated fee schedule for HDFC Bank India",
+        "fees": {
+          "inbound_swift": {
+            "amount": "20.00",
+            "currency": "USD",
+            "description": "Negotiated rate for inbound SWIFT from HDFC"
+          },
+          "outbound_swift": {
+            "amount": "25.00",
+            "currency": "USD",
+            "description": "Negotiated rate for outbound SWIFT to HDFC"
+          }
+        }
+      },
+      "SBININBB": {
+        "bank_name": "State Bank of India",
+        "bank_bic": "SBININBB",
+        "relationship_type": "CORRESPONDENT",
+        "description": "Negotiated fee schedule for State Bank of India",
+        "fees": {
+          "inbound_swift": {
+            "amount": "18.00",
+            "currency": "USD",
+            "description": "Negotiated rate for inbound SWIFT from SBI"
+          },
+          "correspondent_processing": {
+            "amount": "8.00",
+            "currency": "USD",
+            "description": "Negotiated correspondent processing fee"
+          }
+        }
+      },
+      "CHASUS33": {
+        "bank_name": "JPMorgan Chase Bank NA",
+        "bank_bic": "CHASUS33",
+        "relationship_type": "CHIPS_PARTICIPANT",
+        "description": "Negotiated fee schedule for JPMC (volume discount)",
+        "fees": {
+          "inbound_chips": {
+            "amount": "7.00",
+            "currency": "USD",
+            "description": "Volume discount for CHIPS payments from JPMC"
+          },
+          "outbound_chips": {
+            "amount": "12.00",
+            "currency": "USD",
+            "description": "Volume discount for CHIPS payments to JPMC"
+          }
+        }
+      },
+      "BOFAUS3N": {
+        "bank_name": "Bank of America NA",
+        "bank_bic": "BOFAUS3N",
+        "relationship_type": "CHIPS_PARTICIPANT",
+        "description": "Negotiated fee schedule for Bank of America",
+        "fees": {
+          "inbound_fed": {
+            "amount": "12.00",
+            "currency": "USD",
+            "description": "Negotiated rate for inbound FED from BofA"
+          },
+          "outbound_fed": {
+            "amount": "18.00",
+            "currency": "USD",
+            "description": "Negotiated rate for outbound FED to BofA"
+          }
+        }
+      }
+    }
+  },
+  "fee_application_rules": {
+    "OUR": {
+      "description": "Sender pays - fees not deducted from principal, billed separately",
+      "deduct_from_principal": false,
+      "fee_settlement": "BILLING"
+    },
+    "DEBT": {
+      "description": "Sender pays - fees not deducted from principal, billed separately (same as OUR)",
+      "deduct_from_principal": false,
+      "fee_settlement": "BILLING"
+    },
+    "SHA": {
+      "description": "Shared - fees deducted from principal, split between parties",
+      "deduct_from_principal": true,
+      "fee_settlement": "DEDUCTED"
+    },
+    "SHAR": {
+      "description": "Shared - fees deducted from principal, split between parties (same as SHA)",
+      "deduct_from_principal": true,
+      "fee_settlement": "DEDUCTED"
+    },
+    "CRED": {
+      "description": "Receiver pays - all fees deducted from principal",
+      "deduct_from_principal": true,
+      "fee_settlement": "DEDUCTED"
+    }
+  }
+}
+
